@@ -12,23 +12,8 @@ export default defineConfig(() => {
       },
     },
     build: {
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      },
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'vendor-motion': ['motion'],
-            'vendor-firebase': ['firebase'],
-            'vendor-genai': ['@google/genai'],
-          },
-        },
-      },
-      chunkSizeWarningLimit: 1000,
+      sourcemap: false,
+      reportCompressedSize: true,
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',

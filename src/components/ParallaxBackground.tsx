@@ -1,30 +1,33 @@
 import React, { useMemo } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'motion/react';
 import { useNeu } from '../contexts/NeuContext';
+import { isMobile, getOptimizedStarCount } from '../utils/deviceOptimization';
 
 export default function ParallaxBackground() {
   const { config } = useNeu();
   const { scrollYProgress } = useScroll();
+  const mobile = isMobile();
 
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 15,
-    damping: 10,
+    stiffness: mobile ? 50 : 15,
+    damping: mobile ? 50 : 10,
     restDelta: 0.001
   });
 
-  // Layered parallax movements
-  const yBg = useTransform(smoothProgress, [0, 1], ['0%', '20%']);
-  const yStarsSlow = useTransform(smoothProgress, [0, 1], ['0%', '-10%']);
-  const yStarsMid = useTransform(smoothProgress, [0, 1], ['0%', '-30%']);
-  const yStarsFast = useTransform(smoothProgress, [0, 1], ['0%', '-60%']);
+  // Layered parallax movements - reduce on mobile
+  const yBg = useTransform(smoothProgress, [0, 1], ['0%', mobile ? '10%' : '20%']);
+  const yStarsSlow = useTransform(smoothProgress, [0, 1], ['0%', mobile ? '-5%' : '-10%']);
+  const yStarsMid = useTransform(smoothProgress, [0, 1], ['0%', mobile ? '-15%' : '-30%']);
+  const yStarsFast = useTransform(smoothProgress, [0, 1], ['0%', mobile ? '-30%' : '-60%']);
 
-  // Generate hyper-realistic stars
+  // Generate stars - optimize for mobile
+  const starCounts = getOptimizedStarCount();
   const { starsLayer1, starsLayer2, starsLayer3 } = useMemo(() => {
     const generateStars = (count: number, sizeMin: number, sizeMax: number) => 
       Array.from({ length: count }).map((_, i) => ({
         id: i,
         x: Math.random() * 100,
-        y: Math.random() * 150 - 25, // spread across taller area
+        y: Math.random() * 150 - 25,
         size: Math.random() * (sizeMax - sizeMin) + sizeMin,
         opacity: Math.random() * 0.7 + 0.3,
         twinkleDelay: Math.random() * 5,
@@ -33,11 +36,11 @@ export default function ParallaxBackground() {
       }));
     
     return {
-      starsLayer1: generateStars(200, 0.5, 1.5), // distant, small, slow
-      starsLayer2: generateStars(100, 1, 2.5),   // mid, medium, normal
-      starsLayer3: generateStars(50, 2, 4),      // near, large, fast
+      starsLayer1: generateStars(starCounts.layer1, 0.5, 1.5),
+      starsLayer2: generateStars(starCounts.layer2, 1, 2.5),
+      starsLayer3: generateStars(starCounts.layer3, 2, 4),
     };
-  }, []);
+  }, [starCounts.layer1, starCounts.layer2, starCounts.layer3]);
 
   const themeColor = config.isDark ? '255, 255, 255' : '0, 0, 0';
 

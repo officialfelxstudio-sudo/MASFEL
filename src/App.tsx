@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense, lazy } from 'react';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import { NeuProvider } from './contexts/NeuContext';
@@ -12,20 +12,32 @@ import GallerySection from './components/GallerySection';
 import StoreSection from './components/StoreSection';
 import SponsorSection from './components/SponsorSection';
 import HiddenLogin from './components/HiddenLogin';
-import AdminPanel from './components/AdminPanel';
 import Header from './components/Header';
 import { trackPageView } from './utils/db';
-import { trackLivePageView } from './utils/firebase';
+import { isMobile } from './utils/deviceOptimization';
+
+// Lazy load heavy components
+const AdminPanel = lazy(() => import('./components/AdminPanel'));
 
 export default function App() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     trackPageView();
-    trackLivePageView();
+    // Lazy load Firebase tracking after page render
+    setTimeout(() => {
+      import('./utils/firebase').then(module => {
+        module.trackLivePageView();
+      });
+    }, 2000);
   }, []);
 
   useEffect(() => {
+    // Skip Lenis on mobile devices (too heavy)
+    if (isMobile()) {
+      return;
+    }
+
     const lenis = new Lenis({
       autoRaf: true,
       syncTouch: true,
@@ -93,7 +105,11 @@ export default function App() {
         <DataProvider>
           <LanguageProvider>
             <div className="relative w-full min-h-screen overflow-x-hidden text-[var(--text-color)]">
-              <ParallaxBackground />
+              {!isMobile() && (
+                <Suspense fallback={null}>
+                  <ParallaxBackground />
+                </Suspense>
+              )}
               <Header />
               
               <div id="scroll-wrapper" className="relative z-10">
@@ -126,7 +142,9 @@ export default function App() {
               </div>
               
               <HiddenLogin />
-              <AdminPanel />
+              <Suspense fallback={null}>
+                <AdminPanel />
+              </Suspense>
             </div>
           </LanguageProvider>
         </DataProvider>
