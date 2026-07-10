@@ -17,6 +17,15 @@ import {
   subscribeToHomeLinks,
   saveHomeLinks
 } from '../utils/firebase';
+import {
+  getAboutFromFirebase,
+  getHeroFromFirebase,
+  getHomeTextFromFirebase,
+  getGalleryFromFirebase,
+  getStoreFromFirebase,
+  getSponsorsFromFirebase,
+  getHomeLinksFromFirebase
+} from '../utils/firebaseImmediate';
 
 interface DataContextType {
   aboutData: AboutData;
@@ -63,7 +72,27 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [homeLinks, setHomeLinksState] = useState<HomeLink[]>(db.getHomeLinks());
 
   useEffect(() => {
-    // 1. Subscribe to About
+    // PRIORITY 1: Fetch data immediately from Firebase for fast initial load
+    Promise.all([
+      getAboutFromFirebase(),
+      getHeroFromFirebase(),
+      getHomeTextFromFirebase(),
+      getGalleryFromFirebase(),
+      getStoreFromFirebase(),
+      getSponsorsFromFirebase(),
+      getHomeLinksFromFirebase()
+    ]).then(([about, hero, homeText, gallery, store, sponsors, homeLinks]) => {
+      // Update state with Firebase data immediately
+      if (about) setAboutDataState(about);
+      if (hero) setHeroImageState(hero);
+      if (homeText) setHomeTextState(homeText);
+      if (gallery) setGalleryItemsState(gallery);
+      if (store) setStoreItemsState(store);
+      if (sponsors) setSponsorItemsState(sponsors);
+      if (homeLinks) setHomeLinksState(homeLinks);
+    });
+
+    // PRIORITY 2: Setup real-time listeners for live updates
     const unsubAbout = subscribeToAbout((firebaseAbout) => {
       if (firebaseAbout) {
         setAboutDataState(firebaseAbout);

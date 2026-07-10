@@ -29,12 +29,10 @@ export default function App() {
     // Auto-sync local data to Firebase on app startup
     setupAutoSync();
     
-    // Lazy load Firebase tracking after page render
-    setTimeout(() => {
-      import('./utils/firebase').then(module => {
-        module.trackLivePageView();
-      });
-    }, 2000);
+    // Load Firebase tracking immediately (no delay)
+    import('./utils/firebase').then(module => {
+      module.trackLivePageView();
+    });
   }, []);
 
   useEffect(() => {
