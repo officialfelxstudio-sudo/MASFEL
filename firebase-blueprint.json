@@ -1,0 +1,108 @@
+{
+  "entities": {
+    "About": {
+      "title": "About Data",
+      "description": "Information for the About section",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "buttonLabel": { "type": "string" },
+        "buttonUrl": { "type": "string" },
+        "buttonIcon": { "type": "string" }
+      },
+      "required": ["text"]
+    },
+    "Hero": {
+      "title": "Hero Image URL",
+      "description": "Background hero image URL",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" }
+      },
+      "required": ["url"]
+    },
+    "Gallery": {
+      "title": "Gallery Items",
+      "description": "List of gallery images and details",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array" }
+      }
+    },
+    "Store": {
+      "title": "Store Items",
+      "description": "List of items for the store",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array" }
+      }
+    },
+    "Sponsors": {
+      "title": "Sponsors List",
+      "description": "Sponsors name and links",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array" }
+      }
+    },
+    "HomeLinks": {
+      "title": "Home Section Links",
+      "description": "Primary and secondary quick navigation links",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array" }
+      }
+    },
+    "NeuConfig": {
+      "title": "Neumorphic Styles Configuration",
+      "description": "Global dark mode and shape styles config",
+      "type": "object",
+      "properties": {
+        "isDark": { "type": "boolean" },
+        "shape": { "type": "string" }
+      }
+    },
+    "Analytics": {
+      "title": "Live View Analytics",
+      "description": "Count of page views tracking",
+      "type": "object",
+      "properties": {
+        "pageViews": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "app_data/about": {
+      "schema": "About",
+      "description": "Document holding about section text and buttons"
+    },
+    "app_data/hero": {
+      "schema": "Hero",
+      "description": "Document holding hero banner image url"
+    },
+    "app_data/gallery": {
+      "schema": "Gallery",
+      "description": "Document holding gallery pictures array"
+    },
+    "app_data/store": {
+      "schema": "Store",
+      "description": "Document holding store products array"
+    },
+    "app_data/sponsors": {
+      "schema": "Sponsors",
+      "description": "Document holding sponsored links list"
+    },
+    "app_data/homeLinks": {
+      "schema": "HomeLinks",
+      "description": "Document holding social/home section navigation links"
+    },
+    "app_data/neuConfig": {
+      "schema": "NeuConfig",
+      "description": "Document holding app style overrides"
+    },
+    "app_data/analytics": {
+      "schema": "Analytics",
+      "description": "Document holding counter of page views"
+    }
+  }
+}

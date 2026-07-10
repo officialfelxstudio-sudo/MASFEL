@@ -1,0 +1,6 @@
+{
+  "name": "Neumorphic Link Hub",
+  "description": "A elegant neumorphic styled portfolio and link hub with live real-time Firebase database syncing for all text, links, and styling configuration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
