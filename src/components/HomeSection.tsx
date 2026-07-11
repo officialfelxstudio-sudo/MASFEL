@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { NeuContainer } from './NeuContainer';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,41 +8,6 @@ import { renderIcon } from './IconRenderer';
 import { HomeLink } from '../utils/db';
 import { Modal, NeuInput, NeuButton, NeuFileInput } from './Modal';
 import { Plus, Edit2, Trash2, Camera } from 'lucide-react';
-
-function MagneticButton({ children, className = '', ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 150, damping: 15, mass: 0.1 });
-  const springY = useSpring(y, { stiffness: 150, damping: 15, mass: 0.1 });
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set((e.clientX - centerX) * 0.15);
-    y.set((e.clientY - centerY) * 0.15);
-  }, [x, y]);
-
-  const handleMouseLeave = useCallback(() => {
-    x.set(0);
-    y.set(0);
-  }, [x, y]);
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ x: springX, y: springY }}
-      className={className}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  );
-}
 
 export default function HomeSection() {
   const { t } = useLang();
@@ -59,7 +24,6 @@ export default function HomeSection() {
   const [currentLink, setCurrentLink] = useState<HomeLink | null>(null);
   const [formData, setFormData] = useState({ label: '', icon: '', url: '', isPrimary: false });
   const [tempHeroImage, setTempHeroImage] = useState('');
-  const [avatarEntranceDone, setAvatarEntranceDone] = useState(false);
 
   const saveLinks = (newLinks: HomeLink[]) => {
     updateHomeLinks(newLinks);
@@ -109,38 +73,30 @@ export default function HomeSection() {
   const primaryLinks = links.filter(l => l.isPrimary);
   const socialLinks = links.filter(l => !l.isPrimary);
 
-  const titleChars = homeText.title.split('');
-
+  // Animation variants for staggered entrance
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.3,
+        staggerChildren: 0.1,
+        delayChildren: 0.1,
       },
     },
   };
 
   const avatarVariants = {
-    hidden: { clipPath: 'circle(0% at 50% 50%)' },
-    visible: {
-      clipPath: 'circle(70% at 50% 50%)',
-      transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] }
-    },
-  };
-
-  const charVariants = {
-    hidden: { opacity: 0, y: 40, rotateX: -90 },
+    hidden: { opacity: 0, scale: 0.8, rotate: -6, y: 30 },
     visible: {
       opacity: 1,
+      scale: 1,
+      rotate: 0,
       y: 0,
-      rotateX: 0,
-      transition: { type: "spring", stiffness: 100, damping: 12 }
+      transition: { type: "spring", stiffness: 100, damping: 15 }
     },
   };
 
-  const subtitleVariants = {
+  const textVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
@@ -168,12 +124,7 @@ export default function HomeSection() {
       className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 gap-8 sm:gap-12 relative"
       id="home"
     >
-      <motion.div 
-        variants={avatarVariants}
-        className="relative group"
-        style={avatarEntranceDone ? { animation: 'float 4s ease-in-out infinite' } : {}}
-        onAnimationComplete={() => setAvatarEntranceDone(true)}
-      >
+      <motion.div variants={avatarVariants} className="relative group">
         <NeuContainer className="p-1 w-36 h-36 sm:w-48 sm:h-48 overflow-hidden flex items-center justify-center rounded-full">
           <img 
             src={heroImage} 
@@ -192,29 +143,10 @@ export default function HomeSection() {
       </motion.div>
 
       <div className="flex flex-col items-center gap-6 text-center z-10 w-full max-w-md">
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[var(--text-color)] flex flex-wrap justify-center" style={{ perspective: '600px' }}>
-          {titleChars.map((char, i) => (
-            <motion.span
-              key={`${char}-${i}`}
-              variants={charVariants}
-              className="inline-block"
-              style={{ whiteSpace: char === ' ' ? 'pre' : 'normal' }}
-            >
-              {char}
-            </motion.span>
-          ))}
-        </h1>
-
-        <motion.p 
-          variants={subtitleVariants} 
-          className="text-lg font-semibold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text"
-          style={{ 
-            WebkitBackgroundClip: 'text', 
-            WebkitTextFillColor: 'transparent',
-            backgroundSize: '200% 200%',
-            animation: 'gradient-shift 4s ease infinite'
-          }}
-        >
+        <motion.h1 variants={textVariants} className="text-4xl sm:text-6xl font-black tracking-tight text-[var(--text-color)]">
+          {homeText.title}
+        </motion.h1>
+        <motion.p variants={textVariants} className="text-lg opacity-70 text-[var(--text-color)]">
           {homeText.subtitle}
         </motion.p>
 
@@ -225,14 +157,12 @@ export default function HomeSection() {
               variants={buttonVariants}
               className="relative group flex items-center justify-center"
             >
-              <MagneticButton>
-                <a href={link.url} target="_blank" rel="noopener noreferrer">
-                  <NeuContainer shape="flat" className="px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2 text-[var(--text-color)] font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer rounded-full text-sm">
-                    {link.icon && renderIcon(link.icon, link.url, 18)}
-                    {link.label}
-                  </NeuContainer>
-                </a>
-              </MagneticButton>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                <NeuContainer shape="flat" className="px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2 text-[var(--text-color)] font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer rounded-full text-sm">
+                  {link.icon && renderIcon(link.icon, link.url, 18)}
+                  {link.label}
+                </NeuContainer>
+              </a>
               {isOwner && (
                 <div className="absolute -right-16 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => openEdit(link)} className="p-2 text-[var(--text-color)] hover:scale-110"><Edit2 size={16}/></button>
@@ -256,13 +186,11 @@ export default function HomeSection() {
                 variants={buttonVariants}
                 className="relative group"
               >
-                <MagneticButton>
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
-                    <NeuContainer shape="flat" className="p-2 sm:p-2.5 text-[var(--text-color)] transition-all hover:scale-110 active:scale-95 rounded-full flex items-center justify-center">
-                      {renderIcon(link.icon, link.url, 18)}
-                    </NeuContainer>
-                  </a>
-                </MagneticButton>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  <NeuContainer shape="flat" className="p-2 sm:p-2.5 text-[var(--text-color)] transition-all hover:scale-110 active:scale-95 rounded-full flex items-center justify-center">
+                    {renderIcon(link.icon, link.url, 18)}
+                  </NeuContainer>
+                </a>
                 {isOwner && (
                   <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--bg-color)] rounded-lg p-1 shadow-lg z-20">
                     <button onClick={() => openEdit(link)} className="p-1 text-[var(--text-color)] hover:scale-110"><Edit2 size={14}/></button>

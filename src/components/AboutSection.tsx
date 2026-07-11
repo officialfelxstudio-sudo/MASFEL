@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { motion, useInView, useScroll, useTransform } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'motion/react';
 import { NeuContainer } from './NeuContainer';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,7 +15,7 @@ function AnimatedCounter({ target, label, icon }: { target: number; label: strin
   const isInView = useInView(ref, { once: false, amount: 0.5 });
   const hasAnimated = useRef(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isInView || hasAnimated.current) return;
     hasAnimated.current = true;
 
@@ -33,7 +33,7 @@ function AnimatedCounter({ target, label, icon }: { target: number; label: strin
     requestAnimationFrame(animate);
   }, [isInView, target]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isInView) {
       hasAnimated.current = false;
       setCount(0);
@@ -42,18 +42,9 @@ function AnimatedCounter({ target, label, icon }: { target: number; label: strin
 
   return (
     <div ref={ref} className="flex flex-col items-center gap-2 min-w-[100px]">
-      <motion.div
-        animate={isInView ? { scale: [0, 1.3, 1], rotate: [0, -10, 5, 0] } : { scale: 0 }}
-        transition={{ duration: 0.5, delay: 0.2, type: "spring", stiffness: 200 }}
-      >
-        <NeuContainer 
-          shape="flat" 
-          className="p-4 rounded-2xl flex items-center justify-center text-[var(--text-color)] transition-shadow duration-500"
-          style={isInView ? { boxShadow: '0 0 20px rgba(96,165,250,0.3)' } : {}}
-        >
-          {icon}
-        </NeuContainer>
-      </motion.div>
+      <NeuContainer shape="flat" className="p-4 rounded-2xl flex items-center justify-center text-[var(--text-color)]">
+        {icon}
+      </NeuContainer>
       <span className="text-3xl sm:text-4xl font-black text-[var(--text-color)]">{count}</span>
       <span className="text-xs opacity-60 text-[var(--text-color)] font-semibold uppercase tracking-wider">{label}</span>
     </div>
@@ -65,13 +56,6 @@ export default function AboutSection() {
   const { isOwner } = useAuth();
   const { aboutData, updateAboutData, galleryItems, storeItems } = useData();
   const pageViews = parseInt(localStorage.getItem('page_views') || '0');
-  const sectionRef = useRef<HTMLElement>(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
-  });
-  const headingY = useTransform(scrollYProgress, [0, 1], [40, -40]);
   
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState<AboutData>({ text: '', buttonLabel: '', buttonUrl: '', buttonIcon: '' });
@@ -110,17 +94,8 @@ export default function AboutSection() {
     },
   };
 
-  const clipWipeVariants = {
-    hidden: { clipPath: 'inset(100% 0 0 0)' },
-    visible: {
-      clipPath: 'inset(0% 0 0 0)',
-      transition: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }
-    },
-  };
-
   return (
     <motion.section 
-      ref={sectionRef}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: false, amount: 0.15 }}
@@ -129,11 +104,7 @@ export default function AboutSection() {
       id="about"
     >
       <div className="w-full max-w-4xl flex flex-col items-center gap-6 sm:gap-8 relative">
-        <motion.h2 
-          variants={itemVariants} 
-          className="text-3xl sm:text-5xl font-black tracking-tight text-[var(--text-color)] mb-8"
-          style={{ y: headingY }}
-        >
+        <motion.h2 variants={itemVariants} className="text-3xl sm:text-5xl font-black tracking-tight text-[var(--text-color)] mb-8">
           {t('about')}
         </motion.h2>
         
@@ -146,7 +117,7 @@ export default function AboutSection() {
           </button>
         )}
         
-        <motion.div variants={clipWipeVariants} className="w-full">
+        <motion.div variants={itemVariants} className="w-full">
           <NeuContainer className="p-4 w-full text-center sm:text-left flex flex-col gap-3 sm:gap-4 text-[var(--text-color)] text-sm sm:text-base leading-relaxed">
             {aboutData.text.split('\n').map((paragraph, i) => (
               <p key={i}>{paragraph}</p>

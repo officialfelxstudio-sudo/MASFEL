@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { NeuContainer } from './NeuContainer';
 import { X } from 'lucide-react';
 import { ImageCropper } from './ImageCropper';
@@ -13,39 +12,25 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-          initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-          animate={{ opacity: 1, backdropFilter: 'blur(8px)' }}
-          exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          onClick={onClose}
-        >
-          <motion.div 
-            onClick={(e) => e.stopPropagation()} 
-            className="w-full max-w-md"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+    <div 
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md">
+        <NeuContainer shape="flat" className="p-4 sm:p-6 w-full relative flex flex-col gap-4 sm:gap-6 rounded-3xl">
+          <button 
+            onClick={onClose}
+            className="absolute top-6 right-6 text-[var(--text-color)] opacity-70 hover:opacity-100"
           >
-            <NeuContainer shape="flat" className="p-4 sm:p-6 w-full relative flex flex-col gap-4 sm:gap-6 rounded-3xl">
-              <button 
-                onClick={onClose}
-                className="absolute top-6 right-6 text-[var(--text-color)] opacity-70 hover:opacity-100"
-              >
-                <X size={20} />
-              </button>
-              <h2 className="text-xl font-bold text-center text-[var(--text-color)]">{title}</h2>
-              {children}
-            </NeuContainer>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <X size={20} />
+          </button>
+          <h2 className="text-xl font-bold text-center text-[var(--text-color)]">{title}</h2>
+          {children}
+        </NeuContainer>
+      </div>
+    </div>
   );
 };
 
