@@ -13,7 +13,6 @@ import StoreSection from './components/StoreSection';
 import SponsorSection from './components/SponsorSection';
 import HiddenLogin from './components/HiddenLogin';
 import Header from './components/Header';
-import CursorTrail from './components/CursorTrail';
 import { trackPageView } from './utils/db';
 import { isMobile } from './utils/deviceOptimization';
 
@@ -171,7 +170,6 @@ function AppContent() {
         </div>
         
         <HiddenLogin />
-        <CursorTrail />
         <Suspense fallback={null}>
           <AdminPanel />
         </Suspense>
