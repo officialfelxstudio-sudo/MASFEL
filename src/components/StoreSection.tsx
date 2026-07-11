@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { NeuContainer } from './NeuContainer';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,50 +9,102 @@ import { Modal, NeuInput, NeuButton, NeuFileInput } from './Modal';
 import { Trash2, Plus, Edit2, ShoppingCart } from 'lucide-react';
 import { useTilt } from '../hooks/useTilt';
 
-function StoreCard({ item, variants, isOwner, onEdit, onDelete }: {
+function SpecularCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePos({ x, y });
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      className={`relative overflow-hidden ${className}`}
+      style={{
+        background: `radial-gradient(circle at ${mousePos.x}% ${mousePos.y}%, rgba(255,255,255,0.08) 0%, transparent 60%)`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StoreCard({ item, variants, isOwner, onEdit, onDelete, index }: {
   item: StoreItem;
   variants: any;
   isOwner: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  index: number;
 }) {
   const { t } = useLang();
   const tilt = useTilt(6);
+  const [isHovered, setIsHovered] = useState(false);
   return (
-    <motion.div variants={variants} className="relative w-full sm:w-64 max-w-[260px]">
-      <div
-        ref={tilt.ref}
-        onMouseMove={tilt.onMouseMove}
-        onMouseLeave={tilt.onMouseLeave}
-        style={tilt.style}
-      >
-        <NeuContainer overrideDistance={1} overrideBlur={1} className="flex flex-col p-1 gap-2 h-full text-[var(--text-color)] rounded-2xl">
-          <NeuContainer overrideDistance={1} overrideBlur={1} shape="pressed" className="w-full aspect-video overflow-hidden rounded-xl">
-            <img src={item.image} alt={item.title} className="w-full h-full object-cover object-center" />
+    <motion.div 
+      layout
+      variants={variants}
+      initial="hidden"
+      animate="visible"
+      exit={{ opacity: 0, scale: 0.8, y: 20, transition: { duration: 0.3 } }}
+      className="relative w-full sm:w-64 max-w-[260px]"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <SpecularCard>
+        <div
+          ref={tilt.ref}
+          onMouseMove={tilt.onMouseMove}
+          onMouseLeave={(e) => { tilt.onMouseLeave(e); setIsHovered(false); }}
+          style={tilt.style}
+        >
+          <NeuContainer overrideDistance={1} overrideBlur={1} className="flex flex-col p-1 gap-2 h-full text-[var(--text-color)] rounded-2xl">
+            <NeuContainer overrideDistance={1} overrideBlur={1} shape="pressed" className="w-full aspect-video overflow-hidden rounded-xl">
+              <motion.img 
+                src={item.image} 
+                alt={item.title} 
+                className="w-full h-full object-cover object-center"
+                animate={isHovered ? { scale: 1.05 } : { scale: 1 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </NeuContainer>
+            <div className="flex flex-col gap-2 flex-1">
+              <h3 className="text-2xl font-bold">{item.title}</h3>
+              <p className="opacity-70 text-sm flex-1">{item.desc}</p>
+            </div>
+            <div className="flex gap-4">
+              <a href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="flex-1">
+                <motion.div
+                  animate={isHovered ? { animation: 'pulse-glow 2s ease-in-out infinite' } : {}}
+                  className="w-full"
+                >
+                  <NeuContainer shape="flat" className="w-full py-3 flex items-center justify-center gap-2 font-bold cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-xl"
+                    style={isHovered ? { animation: 'pulse-glow 2s ease-in-out infinite' } : {}}
+                  >
+                    <ShoppingCart size={18} /> {t('buyNow')}
+                  </NeuContainer>
+                </motion.div>
+              </a>
+              {isOwner && (
+                <div className="flex gap-2">
+                  <NeuContainer shape="flat" onClick={onEdit} className="p-3 cursor-pointer hover:scale-105 rounded-xl">
+                    <Edit2 size={18} />
+                  </NeuContainer>
+                  <NeuContainer shape="flat" onClick={onDelete} className="p-3 cursor-pointer hover:scale-105 text-red-500 rounded-xl">
+                    <Trash2 size={18} />
+                  </NeuContainer>
+                </div>
+              )}
+            </div>
           </NeuContainer>
-          <div className="flex flex-col gap-2 flex-1">
-            <h3 className="text-2xl font-bold">{item.title}</h3>
-            <p className="opacity-70 text-sm flex-1">{item.desc}</p>
-          </div>
-          <div className="flex gap-4">
-            <a href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="flex-1">
-              <NeuContainer shape="flat" className="w-full py-3 flex items-center justify-center gap-2 font-bold cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-xl">
-                <ShoppingCart size={18} /> {t('buyNow')}
-              </NeuContainer>
-            </a>
-            {isOwner && (
-              <div className="flex gap-2">
-                <NeuContainer shape="flat" onClick={onEdit} className="p-3 cursor-pointer hover:scale-105 rounded-xl">
-                  <Edit2 size={18} />
-                </NeuContainer>
-                <NeuContainer shape="flat" onClick={onDelete} className="p-3 cursor-pointer hover:scale-105 text-red-500 rounded-xl">
-                  <Trash2 size={18} />
-                </NeuContainer>
-              </div>
-            )}
-          </div>
-        </NeuContainer>
-      </div>
+        </div>
+      </SpecularCard>
     </motion.div>
   );
 }
@@ -114,6 +166,10 @@ export default function StoreSection() {
         delayChildren: 0.1,
       },
     },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.2 }
+    }
   };
 
   const titleVariants = {
@@ -126,11 +182,19 @@ export default function StoreSection() {
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, y: 40, scale: 0.95 },
+    hidden: (i: number) => ({
+      opacity: 0, 
+      y: 40, 
+      x: i % 2 === 0 ? -20 : 20,
+      scale: 0.95,
+      rotateY: i % 2 === 0 ? -5 : 5,
+    }),
     visible: {
       opacity: 1,
       y: 0,
+      x: 0,
       scale: 1,
+      rotateY: 0,
       transition: { type: "spring", stiffness: 80, damping: 15 }
     },
   };
@@ -150,16 +214,19 @@ export default function StoreSection() {
         </motion.h2>
 
         <div className="flex flex-wrap justify-center gap-6 md:gap-12 w-full max-w-5xl">
-          {items.map((item) => (
-            <StoreCard key={item.id} item={item} variants={cardVariants} isOwner={isOwner}
-              onEdit={() => openEdit(item)}
-              onDelete={() => openDelete(item)}
-            />
-          ))}
+          <AnimatePresence mode="popLayout">
+            {items.map((item, i) => (
+              <StoreCard key={item.id} item={item} variants={cardVariants} isOwner={isOwner} index={i}
+                onEdit={() => openEdit(item)}
+                onDelete={() => openDelete(item)}
+              />
+            ))}
+          </AnimatePresence>
 
           {isOwner && (
             <motion.div 
               variants={cardVariants}
+              custom={items.length}
               whileHover={{ y: -5 }} 
               className="relative w-full sm:w-[calc(50%-1rem)] max-w-sm h-full min-h-[350px]"
             >

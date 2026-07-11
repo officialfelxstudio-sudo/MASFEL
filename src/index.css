@@ -62,4 +62,14 @@
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(96, 165, 250, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(96, 165, 250, 0.6); }
+  }
 }
