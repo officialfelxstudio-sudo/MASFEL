@@ -58,6 +58,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const loadedCountRef = useRef(0);
   const TOTAL_LISTENERS = 7;
+  const skipSnapshotRef = useRef<Record<string, boolean>>({});
 
   // Initialize with local DB fallbacks
   const [aboutData, setAboutDataState] = useState<AboutData>(db.getAbout());
@@ -85,78 +86,92 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     // Only mark loaded when data comes from the server (not cache)
     const unsubAbout = subscribeToAbout((firebaseAbout, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['about']) {
+        skipSnapshotRef.current['about'] = false;
+        return;
+      }
       if (firebaseAbout) {
         setAboutDataState(firebaseAbout);
       } else if (!fromCache) {
-        const local = db.getAbout();
-        setAboutDataState(local);
-        if (isOwner) saveAbout(local);
+        setAboutDataState(db.getAbout());
       }
     });
 
     const unsubHero = subscribeToHero((firebaseHero, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['hero']) {
+        skipSnapshotRef.current['hero'] = false;
+        return;
+      }
       if (firebaseHero) {
         setHeroImageState(firebaseHero);
       } else if (!fromCache) {
-        const local = db.getHeroImage();
-        setHeroImageState(local);
-        if (isOwner) saveHero(local);
+        setHeroImageState(db.getHeroImage());
       }
     });
 
     const unsubHomeText = subscribeToHomeText((firebaseText, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['homeText']) {
+        skipSnapshotRef.current['homeText'] = false;
+        return;
+      }
       if (firebaseText) {
         setHomeTextState(firebaseText);
       } else if (!fromCache) {
-        const local = db.getHomeText();
-        setHomeTextState(local);
-        if (isOwner) saveHomeText(local);
+        setHomeTextState(db.getHomeText());
       }
     });
 
     const unsubGallery = subscribeToGallery((firebaseGallery, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['gallery']) {
+        skipSnapshotRef.current['gallery'] = false;
+        return;
+      }
       if (firebaseGallery) {
         setGalleryItemsState(firebaseGallery);
       } else if (!fromCache) {
-        const local = db.getGallery();
-        setGalleryItemsState(local);
-        if (isOwner) saveGallery(local);
+        setGalleryItemsState(db.getGallery());
       }
     });
 
     const unsubStore = subscribeToStore((firebaseStore, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['store']) {
+        skipSnapshotRef.current['store'] = false;
+        return;
+      }
       if (firebaseStore) {
         setStoreItemsState(firebaseStore);
       } else if (!fromCache) {
-        const local = db.getStore();
-        setStoreItemsState(local);
-        if (isOwner) saveStore(local);
+        setStoreItemsState(db.getStore());
       }
     });
 
     const unsubSponsors = subscribeToSponsors((firebaseSponsors, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['sponsors']) {
+        skipSnapshotRef.current['sponsors'] = false;
+        return;
+      }
       if (firebaseSponsors) {
         setSponsorItemsState(firebaseSponsors);
       } else if (!fromCache) {
-        const local = db.getSponsors();
-        setSponsorItemsState(local);
-        if (isOwner) saveSponsors(local);
+        setSponsorItemsState(db.getSponsors());
       }
     });
 
     const unsubHomeLinks = subscribeToHomeLinks((firebaseLinks, fromCache) => {
       if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['homeLinks']) {
+        skipSnapshotRef.current['homeLinks'] = false;
+        return;
+      }
       if (firebaseLinks) {
         setHomeLinksState(firebaseLinks);
       } else if (!fromCache) {
-        const local = db.getHomeLinks();
-        setHomeLinksState(local);
-        if (isOwner) saveHomeLinks(local);
+        setHomeLinksState(db.getHomeLinks());
       }
     });
 
@@ -175,42 +190,49 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const updateAboutData = async (data: AboutData) => {
     setAboutDataState(data);
     db.setAbout(data);
+    skipSnapshotRef.current['about'] = true;
     await saveAbout(data);
   };
 
   const updateHeroImage = async (url: string) => {
     setHeroImageState(url);
     db.setHeroImage(url);
+    skipSnapshotRef.current['hero'] = true;
     await saveHero(url);
   };
 
   const updateHomeText = async (data: HomeText) => {
     setHomeTextState(data);
     db.setHomeText(data);
+    skipSnapshotRef.current['homeText'] = true;
     await saveHomeText(data);
   };
 
   const updateGalleryItems = async (items: GalleryItem[]) => {
     setGalleryItemsState(items);
     db.setGallery(items);
+    skipSnapshotRef.current['gallery'] = true;
     await saveGallery(items);
   };
 
   const updateStoreItems = async (items: StoreItem[]) => {
     setStoreItemsState(items);
     db.setStore(items);
+    skipSnapshotRef.current['store'] = true;
     await saveStore(items);
   };
 
   const updateSponsorItems = async (items: SponsorItem[]) => {
     setSponsorItemsState(items);
     db.setSponsors(items);
+    skipSnapshotRef.current['sponsors'] = true;
     await saveSponsors(items);
   };
 
   const updateHomeLinks = async (links: HomeLink[]) => {
     setHomeLinksState(links);
     db.setHomeLinks(links);
+    skipSnapshotRef.current['homeLinks'] = true;
     await saveHomeLinks(links);
   };
 

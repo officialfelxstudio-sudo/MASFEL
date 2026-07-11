@@ -70,8 +70,6 @@ export default function AdminPanel() {
     return () => { unsubCustomTexts(); };
   }, [isOwner]);
 
-  if (!isOwner) return null;
-
   // Save Handlers - debounced 500ms to batch rapid edits
   const handleSaveHomeText = useDebounce(async (updated: HomeText) => {
     await updateHomeText(updated);
@@ -98,6 +96,8 @@ export default function AdminPanel() {
   const handleSaveSponsors = useDebounce(async (updated: SponsorItem[]) => {
     await updateSponsorItems(updated);
   }, 500);
+
+  if (!isOwner) return null;
 
   const handleSaveConfig = async () => {
     try {
