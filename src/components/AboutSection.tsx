@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'motion/react';
 import { NeuContainer } from './NeuContainer';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,12 +7,55 @@ import { useData } from '../contexts/DataContext';
 import { renderIcon } from './IconRenderer';
 import { AboutData } from '../utils/db';
 import { Modal, NeuInput, NeuButton } from './Modal';
-import { Edit2 } from 'lucide-react';
+import { Edit2, Image, ShoppingBag, Eye } from 'lucide-react';
+
+function AnimatedCounter({ target, label, icon }: { target: number; label: string; icon: React.ReactNode }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, amount: 0.5 });
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!isInView || hasAnimated.current) return;
+    hasAnimated.current = true;
+
+    const duration = 1500;
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+  }, [isInView, target]);
+
+  useEffect(() => {
+    if (!isInView) {
+      hasAnimated.current = false;
+      setCount(0);
+    }
+  }, [isInView]);
+
+  return (
+    <div ref={ref} className="flex flex-col items-center gap-2 min-w-[100px]">
+      <NeuContainer shape="flat" className="p-4 rounded-2xl flex items-center justify-center text-[var(--text-color)]">
+        {icon}
+      </NeuContainer>
+      <span className="text-3xl sm:text-4xl font-black text-[var(--text-color)]">{count}</span>
+      <span className="text-xs opacity-60 text-[var(--text-color)] font-semibold uppercase tracking-wider">{label}</span>
+    </div>
+  );
+}
 
 export default function AboutSection() {
   const { t } = useLang();
   const { isOwner } = useAuth();
-  const { aboutData, updateAboutData } = useData();
+  const { aboutData, updateAboutData, galleryItems, storeItems } = useData();
+  const pageViews = parseInt(localStorage.getItem('page_views') || '0');
   
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState<AboutData>({ text: '', buttonLabel: '', buttonUrl: '', buttonIcon: '' });
@@ -88,6 +131,12 @@ export default function AboutSection() {
               </a>
             </div>
           </NeuContainer>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="flex justify-center gap-8 sm:gap-16 mt-4">
+          <AnimatedCounter target={galleryItems.length} label={t('gallery')} icon={<Image size={24} />} />
+          <AnimatedCounter target={storeItems.length} label={t('store')} icon={<ShoppingBag size={24} />} />
+          <AnimatedCounter target={pageViews} label="Views" icon={<Eye size={24} />} />
         </motion.div>
       </div>
 

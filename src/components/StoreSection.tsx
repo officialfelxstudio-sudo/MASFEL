@@ -7,6 +7,55 @@ import { useData } from '../contexts/DataContext';
 import { StoreItem } from '../utils/db';
 import { Modal, NeuInput, NeuButton, NeuFileInput } from './Modal';
 import { Trash2, Plus, Edit2, ShoppingCart } from 'lucide-react';
+import { useTilt } from '../hooks/useTilt';
+
+function StoreCard({ item, variants, isOwner, onEdit, onDelete }: {
+  item: StoreItem;
+  variants: any;
+  isOwner: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useLang();
+  const tilt = useTilt(6);
+  return (
+    <motion.div variants={variants} className="relative w-full sm:w-64 max-w-[260px]">
+      <div
+        ref={tilt.ref}
+        onMouseMove={tilt.onMouseMove}
+        onMouseLeave={tilt.onMouseLeave}
+        style={tilt.style}
+      >
+        <NeuContainer overrideDistance={1} overrideBlur={1} className="flex flex-col p-1 gap-2 h-full text-[var(--text-color)] rounded-2xl">
+          <NeuContainer overrideDistance={1} overrideBlur={1} shape="pressed" className="w-full aspect-video overflow-hidden rounded-xl">
+            <img src={item.image} alt={item.title} className="w-full h-full object-cover object-center" />
+          </NeuContainer>
+          <div className="flex flex-col gap-2 flex-1">
+            <h3 className="text-2xl font-bold">{item.title}</h3>
+            <p className="opacity-70 text-sm flex-1">{item.desc}</p>
+          </div>
+          <div className="flex gap-4">
+            <a href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="flex-1">
+              <NeuContainer shape="flat" className="w-full py-3 flex items-center justify-center gap-2 font-bold cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-xl">
+                <ShoppingCart size={18} /> {t('buyNow')}
+              </NeuContainer>
+            </a>
+            {isOwner && (
+              <div className="flex gap-2">
+                <NeuContainer shape="flat" onClick={onEdit} className="p-3 cursor-pointer hover:scale-105 rounded-xl">
+                  <Edit2 size={18} />
+                </NeuContainer>
+                <NeuContainer shape="flat" onClick={onDelete} className="p-3 cursor-pointer hover:scale-105 text-red-500 rounded-xl">
+                  <Trash2 size={18} />
+                </NeuContainer>
+              </div>
+            )}
+          </div>
+        </NeuContainer>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function StoreSection() {
   const { t } = useLang();
@@ -102,42 +151,10 @@ export default function StoreSection() {
 
         <div className="flex flex-wrap justify-center gap-6 md:gap-12 w-full max-w-5xl">
           {items.map((item) => (
-            <motion.div 
-              key={item.id} 
-              variants={cardVariants}
-              whileHover={{ y: -6, scale: 1.03, transition: { duration: 0.2 } }} 
-              className="relative w-full sm:w-64 max-w-[260px]"
-            >
-              <NeuContainer overrideDistance={1} overrideBlur={1} className="flex flex-col p-1 gap-2 h-full text-[var(--text-color)] rounded-2xl">
-                <NeuContainer overrideDistance={1} overrideBlur={1} shape="pressed" className="w-full aspect-video overflow-hidden rounded-xl">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover object-center" />
-                </NeuContainer>
-                
-                <div className="flex flex-col gap-2 flex-1">
-                  <h3 className="text-2xl font-bold">{item.title}</h3>
-                  <p className="opacity-70 text-sm flex-1">{item.desc}</p>
-                </div>
-
-                <div className="flex gap-4">
-                  <a href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="flex-1">
-                    <NeuContainer shape="flat" className="w-full py-3 flex items-center justify-center gap-2 font-bold cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-xl">
-                      <ShoppingCart size={18} /> {t('buyNow')}
-                    </NeuContainer>
-                  </a>
-                  
-                  {isOwner && (
-                    <div className="flex gap-2">
-                      <NeuContainer shape="flat" onClick={() => openEdit(item)} className="p-3 cursor-pointer hover:scale-105 rounded-xl">
-                        <Edit2 size={18} />
-                      </NeuContainer>
-                      <NeuContainer shape="flat" onClick={() => openDelete(item)} className="p-3 cursor-pointer hover:scale-105 text-red-500 rounded-xl">
-                        <Trash2 size={18} />
-                      </NeuContainer>
-                    </div>
-                  )}
-                </div>
-              </NeuContainer>
-            </motion.div>
+            <StoreCard key={item.id} item={item} variants={cardVariants} isOwner={isOwner}
+              onEdit={() => openEdit(item)}
+              onDelete={() => openDelete(item)}
+            />
           ))}
 
           {isOwner && (

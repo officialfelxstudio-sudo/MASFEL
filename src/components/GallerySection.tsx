@@ -7,6 +7,51 @@ import { useData } from '../contexts/DataContext';
 import { GalleryItem } from '../utils/db';
 import { Modal, NeuButton, NeuFileInput, NeuInput } from './Modal';
 import { Trash2, Plus, Edit2 } from 'lucide-react';
+import { useTilt } from '../hooks/useTilt';
+
+function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
+  item: GalleryItem;
+  variants: any;
+  isOwner: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const tilt = useTilt(6);
+  return (
+    <motion.div variants={variants} className="relative w-full sm:w-64 max-w-[260px]">
+      <div
+        ref={tilt.ref}
+        onMouseMove={tilt.onMouseMove}
+        onMouseLeave={tilt.onMouseLeave}
+        style={tilt.style}
+      >
+        <NeuContainer overrideDistance={1} overrideBlur={1} className="flex flex-col p-1 gap-2 h-full text-[var(--text-color)] rounded-2xl">
+          <NeuContainer overrideDistance={1} overrideBlur={1} shape="pressed" className="w-full aspect-video overflow-hidden rounded-xl">
+            <img src={item.url} alt="Gallery item" className="w-full h-full object-cover object-center" />
+          </NeuContainer>
+          <div className="flex flex-col gap-2 flex-1">
+            <h3 className="text-2xl font-bold">{item.title || '\u00A0'}</h3>
+            <p className="opacity-70 text-sm flex-1">{item.desc || '\u00A0'}</p>
+          </div>
+        </NeuContainer>
+      </div>
+      {isOwner && (
+        <div className="absolute top-2 right-2 z-10 flex gap-2">
+          <button onClick={onEdit} className="transition-transform hover:scale-110">
+            <NeuContainer shape="convex" className="p-3 text-[var(--text-color)] rounded-full">
+              <Edit2 size={16} />
+            </NeuContainer>
+          </button>
+          <button onClick={onDelete} className="transition-transform hover:scale-110">
+            <NeuContainer shape="convex" className="p-3 text-red-500 rounded-full">
+              <Trash2 size={16} />
+            </NeuContainer>
+          </button>
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 export default function GallerySection() {
   const { t } = useLang();
@@ -91,44 +136,10 @@ export default function GallerySection() {
 
         <div className="flex flex-wrap justify-center gap-6 md:gap-12 w-full max-w-5xl">
           {items.map((item) => (
-            <motion.div 
-              key={item.id} 
-              variants={cardVariants}
-              whileHover={{ y: -6, scale: 1.03, transition: { duration: 0.2 } }} 
-              className="relative w-full sm:w-64 max-w-[260px]"
-            >
-              <NeuContainer overrideDistance={1} overrideBlur={1} className="flex flex-col p-1 gap-2 h-full text-[var(--text-color)] rounded-2xl">
-                <NeuContainer overrideDistance={1} overrideBlur={1} shape="pressed" className="w-full aspect-video overflow-hidden rounded-xl">
-                  <img src={item.url} alt="Gallery item" className="w-full h-full object-cover object-center" />
-                </NeuContainer>
-                
-                <div className="flex flex-col gap-2 flex-1">
-                  <h3 className="text-2xl font-bold">{item.title || '\u00A0'}</h3>
-                  <p className="opacity-70 text-sm flex-1">{item.desc || '\u00A0'}</p>
-                </div>
-              </NeuContainer>
-              
-              {isOwner && (
-                <div className="absolute top-2 right-2 z-10 flex gap-2">
-                  <button 
-                    onClick={() => { setCurrentItem(item); setFormData({ url: item.url, title: item.title || '', desc: item.desc || '' }); setModalType('edit'); }}
-                    className="transition-transform hover:scale-110"
-                  >
-                    <NeuContainer shape="convex" className="p-3 text-[var(--text-color)] rounded-full">
-                      <Edit2 size={16} />
-                    </NeuContainer>
-                  </button>
-                  <button 
-                    onClick={() => { setDeleteId(item.id); setModalType('delete'); }}
-                    className="transition-transform hover:scale-110"
-                  >
-                    <NeuContainer shape="convex" className="p-3 text-red-500 rounded-full">
-                      <Trash2 size={16} />
-                    </NeuContainer>
-                  </button>
-                </div>
-              )}
-            </motion.div>
+            <GalleryCard key={item.id} item={item} variants={cardVariants} isOwner={isOwner}
+              onEdit={() => { setCurrentItem(item); setFormData({ url: item.url, title: item.title || '', desc: item.desc || '' }); setModalType('edit'); }}
+              onDelete={() => { setDeleteId(item.id); setModalType('delete'); }}
+            />
           ))}
 
           {isOwner && (
