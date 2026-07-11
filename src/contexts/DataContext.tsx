@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { db, AboutData, HomeText, GalleryItem, StoreItem, SponsorItem, HomeLink } from '../utils/db';
 import { useAuth } from './AuthContext';
 import {
@@ -17,17 +17,9 @@ import {
   subscribeToHomeLinks,
   saveHomeLinks
 } from '../utils/firebase';
-import {
-  getAboutFromFirebase,
-  getHeroFromFirebase,
-  getHomeTextFromFirebase,
-  getGalleryFromFirebase,
-  getStoreFromFirebase,
-  getSponsorsFromFirebase,
-  getHomeLinksFromFirebase
-} from '../utils/firebaseImmediate';
 
 interface DataContextType {
+  isLoading: boolean;
   aboutData: AboutData;
   setAboutData: (data: AboutData) => void;
   updateAboutData: (data: AboutData) => Promise<void>;
@@ -62,6 +54,11 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const { isOwner } = useAuth();
   
+  // Loading state - starts true until Firebase data arrives
+  const [isLoading, setIsLoading] = useState(true);
+  const loadedCountRef = useRef(0);
+  const TOTAL_LISTENERS = 7;
+
   // Initialize with local DB fallbacks
   const [aboutData, setAboutDataState] = useState<AboutData>(db.getAbout());
   const [heroImage, setHeroImageState] = useState<string>(db.getHeroImage());
@@ -71,98 +68,92 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [sponsorItems, setSponsorItemsState] = useState<SponsorItem[]>(db.getSponsors());
   const [homeLinks, setHomeLinksState] = useState<HomeLink[]>(db.getHomeLinks());
 
-  useEffect(() => {
-    // PRIORITY 1: Fetch data immediately from Firebase for fast initial load
-    Promise.all([
-      getAboutFromFirebase(),
-      getHeroFromFirebase(),
-      getHomeTextFromFirebase(),
-      getGalleryFromFirebase(),
-      getStoreFromFirebase(),
-      getSponsorsFromFirebase(),
-      getHomeLinksFromFirebase()
-    ]).then(([about, hero, homeText, gallery, store, sponsors, homeLinks]) => {
-      // Update state with Firebase data immediately
-      if (about) setAboutDataState(about);
-      if (hero) setHeroImageState(hero);
-      if (homeText) setHomeTextState(homeText);
-      if (gallery) setGalleryItemsState(gallery);
-      if (store) setStoreItemsState(store);
-      if (sponsors) setSponsorItemsState(sponsors);
-      if (homeLinks) setHomeLinksState(homeLinks);
-    });
+  // Helper to mark a listener as loaded and hide loading when all done
+  const markLoaded = () => {
+    loadedCountRef.current += 1;
+    if (loadedCountRef.current >= TOTAL_LISTENERS) {
+      setIsLoading(false);
+    }
+  };
 
-    // PRIORITY 2: Setup real-time listeners for live updates
-    const unsubAbout = subscribeToAbout((firebaseAbout) => {
+  useEffect(() => {
+    loadedCountRef.current = 0;
+    setIsLoading(true);
+
+    // Single source of truth: real-time listeners only
+    // onSnapshot fires with cached data first, then server data
+    // Only mark loaded when data comes from the server (not cache)
+    const unsubAbout = subscribeToAbout((firebaseAbout, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseAbout) {
         setAboutDataState(firebaseAbout);
-      } else {
+      } else if (!fromCache) {
         const local = db.getAbout();
         setAboutDataState(local);
         if (isOwner) saveAbout(local);
       }
     });
 
-    // 2. Subscribe to Hero
-    const unsubHero = subscribeToHero((firebaseHero) => {
+    const unsubHero = subscribeToHero((firebaseHero, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseHero) {
         setHeroImageState(firebaseHero);
-      } else {
+      } else if (!fromCache) {
         const local = db.getHeroImage();
         setHeroImageState(local);
         if (isOwner) saveHero(local);
       }
     });
 
-    // 3. Subscribe to Home Text
-    const unsubHomeText = subscribeToHomeText((firebaseText) => {
+    const unsubHomeText = subscribeToHomeText((firebaseText, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseText) {
         setHomeTextState(firebaseText);
-      } else {
+      } else if (!fromCache) {
         const local = db.getHomeText();
         setHomeTextState(local);
         if (isOwner) saveHomeText(local);
       }
     });
 
-    // 4. Subscribe to Gallery
-    const unsubGallery = subscribeToGallery((firebaseGallery) => {
+    const unsubGallery = subscribeToGallery((firebaseGallery, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseGallery) {
         setGalleryItemsState(firebaseGallery);
-      } else {
+      } else if (!fromCache) {
         const local = db.getGallery();
         setGalleryItemsState(local);
         if (isOwner) saveGallery(local);
       }
     });
 
-    // 5. Subscribe to Store
-    const unsubStore = subscribeToStore((firebaseStore) => {
+    const unsubStore = subscribeToStore((firebaseStore, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseStore) {
         setStoreItemsState(firebaseStore);
-      } else {
+      } else if (!fromCache) {
         const local = db.getStore();
         setStoreItemsState(local);
         if (isOwner) saveStore(local);
       }
     });
 
-    // 6. Subscribe to Sponsors
-    const unsubSponsors = subscribeToSponsors((firebaseSponsors) => {
+    const unsubSponsors = subscribeToSponsors((firebaseSponsors, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseSponsors) {
         setSponsorItemsState(firebaseSponsors);
-      } else {
+      } else if (!fromCache) {
         const local = db.getSponsors();
         setSponsorItemsState(local);
         if (isOwner) saveSponsors(local);
       }
     });
 
-    // 7. Subscribe to Home Links
-    const unsubHomeLinks = subscribeToHomeLinks((firebaseLinks) => {
+    const unsubHomeLinks = subscribeToHomeLinks((firebaseLinks, fromCache) => {
+      if (!fromCache) markLoaded();
       if (firebaseLinks) {
         setHomeLinksState(firebaseLinks);
-      } else {
+      } else if (!fromCache) {
         const local = db.getHomeLinks();
         setHomeLinksState(local);
         if (isOwner) saveHomeLinks(local);
@@ -225,6 +216,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <DataContext.Provider value={{
+      isLoading,
       aboutData,
       setAboutData: setAboutDataState,
       updateAboutData,

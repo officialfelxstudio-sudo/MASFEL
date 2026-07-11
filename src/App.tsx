@@ -15,7 +15,6 @@ import HiddenLogin from './components/HiddenLogin';
 import Header from './components/Header';
 import { trackPageView } from './utils/db';
 import { isMobile } from './utils/deviceOptimization';
-import { setupAutoSync } from './utils/syncToFirebase';
 
 // Lazy load heavy components
 const AdminPanel = lazy(() => import('./components/AdminPanel'));
@@ -25,10 +24,7 @@ export default function App() {
 
   useEffect(() => {
     trackPageView();
-    
-    // Auto-sync local data to Firebase on app startup
-    setupAutoSync();
-    
+
     // Load Firebase tracking immediately (no delay)
     import('./utils/firebase').then(module => {
       module.trackLivePageView();

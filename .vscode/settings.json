@@ -1,0 +1,4 @@
+{
+    "deepseek-copilot.experimental.stabilizeToolList": true,
+    "chat.byokUtilityModelDefault": "mainAgent"
+}

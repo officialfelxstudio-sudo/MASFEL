@@ -36,8 +36,8 @@ export const NeuProvider = ({ children }: { children: ReactNode }) => {
 
   // Subscribe to real-time changes in Firestore
   useEffect(() => {
-    const unsubscribe = subscribeToNeuConfig((firebaseConfig) => {
-      if (firebaseConfig) {
+    const unsubscribe = subscribeToNeuConfig((firebaseConfig, fromCache) => {
+      if (firebaseConfig && !fromCache) {
         setConfig(prev => ({
           ...prev,
           ...firebaseConfig

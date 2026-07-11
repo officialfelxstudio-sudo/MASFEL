@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNeu, NeuShape } from '../contexts/NeuContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
 import { NeuContainer } from './NeuContainer';
+import { useDebounce } from '../hooks/useDebounce';
 import { 
   Settings, 
   X, 
@@ -33,107 +35,69 @@ import {
 } from '../utils/db';
 import { 
   saveNeuConfig,
-  subscribeToHomeText,
-  saveHomeText,
-  subscribeToAbout,
-  saveAbout,
-  subscribeToGallery,
-  saveGallery,
-  subscribeToStore,
-  saveStore,
-  subscribeToSponsors,
-  saveSponsors,
   subscribeToCustomTexts,
-  saveCustomTexts
+  saveCustomTexts,
+  saveHomeText,
+  saveAbout,
+  saveGallery,
+  saveStore,
+  saveSponsors
 } from '../utils/firebase';
 
 export default function AdminPanel() {
   const { config, updateConfig } = useNeu();
   const { isOwner, logout } = useAuth();
+  const { 
+    homeText, setHomeText, updateHomeText,
+    aboutData, setAboutData, updateAboutData,
+    galleryItems, setGalleryItems, updateGalleryItems,
+    storeItems, setStoreItems, updateStoreItems,
+    sponsorItems, setSponsorItems, updateSponsorItems
+  } = useData();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'design' | 'content'>('design');
   const [activeSection, setActiveSection] = useState<'titles' | 'home' | 'about' | 'gallery' | 'store' | 'sponsors' | null>('titles');
 
-  // Content States
-  const [homeText, setHomeText] = useState<HomeText>(db.getHomeText());
+  // Custom texts (separate subscription since it's not in DataContext)
   const [customTexts, setCustomTexts] = useState<CustomTexts>(db.getCustomTexts());
-  const [aboutData, setAboutData] = useState<AboutData>(db.getAbout());
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(db.getGallery());
-  const [storeItems, setStoreItems] = useState<StoreItem[]>(db.getStore());
-  const [sponsorItems, setSponsorItems] = useState<SponsorItem[]>(db.getSponsors());
 
-  // Real-time synchronization
   useEffect(() => {
     if (!isOwner) return;
-
-    const unsubHomeText = subscribeToHomeText((data) => {
-      if (data) setHomeText(data);
+    const unsubCustomTexts = subscribeToCustomTexts((data, fromCache) => {
+      if (data && !fromCache) setCustomTexts(data);
     });
-    const unsubCustomTexts = subscribeToCustomTexts((data) => {
-      if (data) setCustomTexts(data);
-    });
-    const unsubAbout = subscribeToAbout((data) => {
-      if (data) setAboutData(data);
-    });
-    const unsubGallery = subscribeToGallery((data) => {
-      if (data) setGalleryItems(data);
-    });
-    const unsubStore = subscribeToStore((data) => {
-      if (data) setStoreItems(data);
-    });
-    const unsubSponsors = subscribeToSponsors((data) => {
-      if (data) setSponsorItems(data);
-    });
-
-    return () => {
-      unsubHomeText();
-      unsubCustomTexts();
-      unsubAbout();
-      unsubGallery();
-      unsubStore();
-      unsubSponsors();
-    };
+    return () => { unsubCustomTexts(); };
   }, [isOwner]);
 
   if (!isOwner) return null;
 
-  // Save Handlers
-  const handleSaveHomeText = async (updated: HomeText) => {
-    setHomeText(updated);
-    db.setHomeText(updated);
-    await saveHomeText(updated);
-  };
+  // Save Handlers - debounced 500ms to batch rapid edits
+  const handleSaveHomeText = useDebounce(async (updated: HomeText) => {
+    await updateHomeText(updated);
+  }, 500);
 
-  const handleSaveCustomTexts = async (updated: CustomTexts) => {
+  const handleSaveCustomTexts = useDebounce(async (updated: CustomTexts) => {
     setCustomTexts(updated);
     db.setCustomTexts(updated);
     await saveCustomTexts(updated);
-  };
+  }, 500);
 
-  const handleSaveAbout = async (updated: AboutData) => {
-    setAboutData(updated);
-    db.setAbout(updated);
-    await saveAbout(updated);
-  };
+  const handleSaveAbout = useDebounce(async (updated: AboutData) => {
+    await updateAboutData(updated);
+  }, 500);
 
-  const handleSaveGallery = async (updated: GalleryItem[]) => {
-    setGalleryItems(updated);
-    db.setGallery(updated);
-    await saveGallery(updated);
-  };
+  const handleSaveGallery = useDebounce(async (updated: GalleryItem[]) => {
+    await updateGalleryItems(updated);
+  }, 500);
 
-  const handleSaveStore = async (updated: StoreItem[]) => {
-    setStoreItems(updated);
-    db.setStore(updated);
-    await saveStore(updated);
-  };
+  const handleSaveStore = useDebounce(async (updated: StoreItem[]) => {
+    await updateStoreItems(updated);
+  }, 500);
 
-  const handleSaveSponsors = async (updated: SponsorItem[]) => {
-    setSponsorItems(updated);
-    db.setSponsors(updated);
-    await saveSponsors(updated);
-  };
+  const handleSaveSponsors = useDebounce(async (updated: SponsorItem[]) => {
+    await updateSponsorItems(updated);
+  }, 500);
 
   const handleSaveConfig = async () => {
     try {

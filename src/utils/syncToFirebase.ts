@@ -43,23 +43,7 @@ export async function syncLocalDataToFirebase() {
   }
 }
 
-// Auto-sync on app load if data exists in localStorage
+// Auto-sync disabled — admin edits are the source of truth
 export function setupAutoSync() {
-  // Only run once per session
-  if (sessionStorage.getItem('sync_completed')) {
-    return;
-  }
-
-  const hasLocalData = localStorage.getItem('db_about') || 
-                       localStorage.getItem('db_gallery') || 
-                       localStorage.getItem('db_store');
-
-  if (hasLocalData) {
-    console.log('📲 Local data detected, syncing to Firebase...');
-    syncLocalDataToFirebase().then(success => {
-      if (success) {
-        sessionStorage.setItem('sync_completed', 'true');
-      }
-    });
-  }
+  // no-op: localStorage no longer overwrites Firebase
 }

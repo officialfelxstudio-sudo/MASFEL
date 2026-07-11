@@ -56,10 +56,10 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = subscribeToCustomTexts((data) => {
-      if (data) {
+    const unsubscribe = subscribeToCustomTexts((data, fromCache) => {
+      if (data && !fromCache) {
         setCustomTexts(data);
-      } else {
+      } else if (!data && !fromCache) {
         setCustomTexts(db.getCustomTexts());
       }
     });

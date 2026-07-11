@@ -72,18 +72,19 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 // Helper to listen to real-time changes of any doc
-export const listenToDoc = (docName: string, callback: (data: any) => void) => {
+export const listenToDoc = (docName: string, callback: (data: any, fromCache: boolean) => void) => {
   const docRef = doc(db, 'app_data', docName);
   return onSnapshot(docRef, (snapshot) => {
+    const fromCache = snapshot.metadata.fromCache;
     if (snapshot.exists()) {
-      callback(snapshot.data());
+      callback(snapshot.data(), fromCache);
     } else {
-      callback(null);
+      callback(null, fromCache);
     }
   }, (error) => {
     console.error(`Error listening to doc ${docName}:`, error);
     try {
-      callback(null);
+      callback(null, false);
     } catch (fallbackError) {
       console.error("Failed to execute local fallback callback:", fallbackError);
     }
@@ -108,9 +109,9 @@ export const saveDoc = async (docName: string, data: any) => {
 };
 
 // Real-time operations
-export const subscribeToAbout = (callback: (data: AboutData | null) => void) => {
-  return listenToDoc('about', (data) => {
-    callback(data ? (data as AboutData) : null);
+export const subscribeToAbout = (callback: (data: AboutData | null, fromCache: boolean) => void) => {
+  return listenToDoc('about', (data, fromCache) => {
+    callback(data ? (data as AboutData) : null, fromCache);
   });
 };
 
@@ -118,9 +119,9 @@ export const saveAbout = async (data: AboutData) => {
   await saveDoc('about', data);
 };
 
-export const subscribeToHero = (callback: (url: string | null) => void) => {
-  return listenToDoc('hero', (data) => {
-    callback(data && data.url ? data.url : null);
+export const subscribeToHero = (callback: (url: string | null, fromCache: boolean) => void) => {
+  return listenToDoc('hero', (data, fromCache) => {
+    callback(data && data.url ? data.url : null, fromCache);
   });
 };
 
@@ -128,9 +129,9 @@ export const saveHero = async (url: string) => {
   await saveDoc('hero', { url });
 };
 
-export const subscribeToGallery = (callback: (items: GalleryItem[] | null) => void) => {
-  return listenToDoc('gallery', (data) => {
-    callback(data && data.items ? data.items : null);
+export const subscribeToGallery = (callback: (items: GalleryItem[] | null, fromCache: boolean) => void) => {
+  return listenToDoc('gallery', (data, fromCache) => {
+    callback(data && data.items ? data.items : null, fromCache);
   });
 };
 
@@ -138,9 +139,9 @@ export const saveGallery = async (items: GalleryItem[]) => {
   await saveDoc('gallery', { items });
 };
 
-export const subscribeToStore = (callback: (items: StoreItem[] | null) => void) => {
-  return listenToDoc('store', (data) => {
-    callback(data && data.items ? data.items : null);
+export const subscribeToStore = (callback: (items: StoreItem[] | null, fromCache: boolean) => void) => {
+  return listenToDoc('store', (data, fromCache) => {
+    callback(data && data.items ? data.items : null, fromCache);
   });
 };
 
@@ -148,9 +149,9 @@ export const saveStore = async (items: StoreItem[]) => {
   await saveDoc('store', { items });
 };
 
-export const subscribeToSponsors = (callback: (items: SponsorItem[] | null) => void) => {
-  return listenToDoc('sponsors', (data) => {
-    callback(data && data.items ? data.items : null);
+export const subscribeToSponsors = (callback: (items: SponsorItem[] | null, fromCache: boolean) => void) => {
+  return listenToDoc('sponsors', (data, fromCache) => {
+    callback(data && data.items ? data.items : null, fromCache);
   });
 };
 
@@ -158,9 +159,9 @@ export const saveSponsors = async (items: SponsorItem[]) => {
   await saveDoc('sponsors', { items });
 };
 
-export const subscribeToHomeLinks = (callback: (items: HomeLink[] | null) => void) => {
-  return listenToDoc('homeLinks', (data) => {
-    callback(data && data.items ? data.items : null);
+export const subscribeToHomeLinks = (callback: (items: HomeLink[] | null, fromCache: boolean) => void) => {
+  return listenToDoc('homeLinks', (data, fromCache) => {
+    callback(data && data.items ? data.items : null, fromCache);
   });
 };
 
@@ -168,9 +169,9 @@ export const saveHomeLinks = async (items: HomeLink[]) => {
   await saveDoc('homeLinks', { items });
 };
 
-export const subscribeToNeuConfig = (callback: (config: Partial<NeuConfig> | null) => void) => {
-  return listenToDoc('neuConfig', (data) => {
-    callback(data ? (data as Partial<NeuConfig>) : null);
+export const subscribeToNeuConfig = (callback: (config: Partial<NeuConfig> | null, fromCache: boolean) => void) => {
+  return listenToDoc('neuConfig', (data, fromCache) => {
+    callback(data ? (data as Partial<NeuConfig>) : null, fromCache);
   });
 };
 
@@ -189,15 +190,15 @@ export const trackLivePageView = async () => {
   }
 };
 
-export const subscribeToPageViews = (callback: (views: number | null) => void) => {
-  return listenToDoc('analytics', (data) => {
-    callback(data && typeof data.pageViews === 'number' ? data.pageViews : null);
+export const subscribeToPageViews = (callback: (views: number | null, fromCache: boolean) => void) => {
+  return listenToDoc('analytics', (data, fromCache) => {
+    callback(data && typeof data.pageViews === 'number' ? data.pageViews : null, fromCache);
   });
 };
 
-export const subscribeToHomeText = (callback: (data: HomeText | null) => void) => {
-  return listenToDoc('homeText', (data) => {
-    callback(data ? (data as HomeText) : null);
+export const subscribeToHomeText = (callback: (data: HomeText | null, fromCache: boolean) => void) => {
+  return listenToDoc('homeText', (data, fromCache) => {
+    callback(data ? (data as HomeText) : null, fromCache);
   });
 };
 
@@ -205,9 +206,9 @@ export const saveHomeText = async (data: HomeText) => {
   await saveDoc('homeText', data);
 };
 
-export const subscribeToCustomTexts = (callback: (data: CustomTexts | null) => void) => {
-  return listenToDoc('customTexts', (data) => {
-    callback(data ? (data as CustomTexts) : null);
+export const subscribeToCustomTexts = (callback: (data: CustomTexts | null, fromCache: boolean) => void) => {
+  return listenToDoc('customTexts', (data, fromCache) => {
+    callback(data ? (data as CustomTexts) : null, fromCache);
   });
 };
 
