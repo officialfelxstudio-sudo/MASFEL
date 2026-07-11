@@ -212,21 +212,21 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setGalleryItemsState(items);
     db.setGallery(items);
     skipSnapshotRef.current['gallery'] = true;
-    if (!(await saveGallery(items))) alert('Gagal sync ke server. Data gambar terlalu besar atau jaringan bermasalah. Data tersimpan di perangkat.');
+    if (!(await saveGallery(items))) alert('Gagal sync gallery ke server. Data tersimpan di perangkat.');
   };
 
   const updateStoreItems = async (items: StoreItem[]) => {
     setStoreItemsState(items);
     db.setStore(items);
     skipSnapshotRef.current['store'] = true;
-    if (!(await saveStore(items))) alert('Gagal sync ke server. Data gambar terlalu besar atau jaringan bermasalah. Data tersimpan di perangkat.');
+    if (!(await saveStore(items))) alert('Gagal sync store ke server. Data tersimpan di perangkat.');
   };
 
   const updateSponsorItems = async (items: SponsorItem[]) => {
     setSponsorItemsState(items);
     db.setSponsors(items);
     skipSnapshotRef.current['sponsors'] = true;
-    if (!(await saveSponsors(items))) alert('Gagal sync ke server. Data gambar terlalu besar atau jaringan bermasalah. Data tersimpan di perangkat.');
+    if (!(await saveSponsors(items))) alert('Gagal sync sponsor ke server. Data tersimpan di perangkat.');
   };
 
   const updateHomeLinks = async (links: HomeLink[]) => {

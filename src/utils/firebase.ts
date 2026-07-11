@@ -88,31 +88,34 @@ export const listenToDoc = (docName: string, callback: (data: any, fromCache: bo
     } catch (fallbackError) {
       console.error("Failed to execute local fallback callback:", fallbackError);
     }
-    const errMsg = error instanceof Error ? error.message : String(error);
-    const isPermissionError = errMsg.toLowerCase().includes('permission') || 
-                              (error && (error as any).code === 'permission-denied');
-    if (isPermissionError) {
-      handleFirestoreError(error, OperationType.GET, `app_data/${docName}`);
-    }
+    console.warn(`Firestore listener for "${docName}" lost connection. SDK will auto-reconnect.`);
   });
 };
 
-// Helper to save data to any doc
-export const saveDoc = async (docName: string, data: any): Promise<boolean> => {
+// Helper to save data to any doc (with retry for transient connection errors)
+export const saveDoc = async (docName: string, data: any, retries = 2): Promise<boolean> => {
   const docRef = doc(db, 'app_data', docName);
-  try {
-    await setDoc(docRef, data, { merge: true });
-    return true;
-  } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    const isSizeError = errMsg.includes('1048576') || errMsg.includes('too large') || errMsg.includes('MAX_DOCUMENT_SIZE');
-    if (isSizeError) {
-      console.error(`Firestore document "${docName}" is too large (exceeds 1 MiB). Try reducing image quality or removing some items.`);
-    } else {
-      console.error(`Error saving doc ${docName}:`, error);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await setDoc(docRef, data, { merge: true });
+      return true;
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isSizeError = errMsg.includes('1048576') || errMsg.includes('too large') || errMsg.includes('MAX_DOCUMENT_SIZE');
+      if (isSizeError) {
+        console.error(`Firestore document "${docName}" is too large (exceeds 1 MiB). Try reducing image quality or removing some items.`);
+        return false;
+      }
+      if (attempt < retries) {
+        console.warn(`Retry ${attempt + 1}/${retries} for doc "${docName}"...`);
+        await new Promise(r => setTimeout(r, 1000));
+        continue;
+      }
+      console.error(`Error saving doc ${docName} after ${retries + 1} attempts:`, error);
+      return false;
     }
-    return false;
   }
+  return false;
 };
 
 // Real-time operations
