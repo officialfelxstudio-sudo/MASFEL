@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'motion/react';
+import React, { useMemo } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'motion/react';
 import { useNeu } from '../contexts/NeuContext';
 import { isMobile, getOptimizedStarCount } from '../utils/deviceOptimization';
 
@@ -43,28 +43,6 @@ export default function ParallaxBackground() {
 
   const themeColor = config.isDark ? '255, 255, 255' : '0, 0, 0';
 
-  // Mouse parallax orbs
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const orb1X = useSpring(mouseX, { stiffness: 15, damping: 20 });
-  const orb1Y = useSpring(mouseY, { stiffness: 15, damping: 20 });
-  const orb2X = useSpring(mouseX, { stiffness: 10, damping: 25 });
-  const orb2Y = useSpring(mouseY, { stiffness: 10, damping: 25 });
-  const orb3X = useSpring(mouseX, { stiffness: 20, damping: 15 });
-  const orb3Y = useSpring(mouseY, { stiffness: 20, damping: 15 });
-
-  useEffect(() => {
-    if (mobile) return;
-    const onMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      mouseX.set(x * 30);
-      mouseY.set(y * 30);
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    return () => window.removeEventListener('mousemove', onMouseMove);
-  }, [mobile, mouseX, mouseY]);
-
   const renderStars = (stars: any[], yTransform: any) => (
     <motion.div className="absolute inset-0 z-0" style={{ y: yTransform }}>
       {stars.map(star => (
@@ -103,47 +81,7 @@ export default function ParallaxBackground() {
       {renderStars(starsLayer2, yStarsMid)}
       {renderStars(starsLayer3, yStarsFast)}
 
-      {/* Mouse Parallax Orbs */}
-      {!mobile && (
-        <>
-          <motion.div
-            className="absolute rounded-full blur-[80px]"
-            style={{
-              x: orb1X,
-              y: orb1Y,
-              top: '20%',
-              left: '30%',
-              width: 200,
-              height: 200,
-              background: `radial-gradient(circle, rgba(100, 120, 255, ${config.isDark ? 0.08 : 0.05}) 0%, transparent 70%)`,
-            }}
-          />
-          <motion.div
-            className="absolute rounded-full blur-[60px]"
-            style={{
-              x: orb2X,
-              y: orb2Y,
-              top: '60%',
-              left: '60%',
-              width: 150,
-              height: 150,
-              background: `radial-gradient(circle, rgba(180, 100, 220, ${config.isDark ? 0.06 : 0.04}) 0%, transparent 70%)`,
-            }}
-          />
-          <motion.div
-            className="absolute rounded-full blur-[100px]"
-            style={{
-              x: orb3X,
-              y: orb3Y,
-              top: '40%',
-              left: '15%',
-              width: 180,
-              height: 180,
-              background: `radial-gradient(circle, rgba(100, 200, 220, ${config.isDark ? 0.05 : 0.03}) 0%, transparent 70%)`,
-            }}
-          />
-        </>
-      )}
+
       
     </div>
   );
