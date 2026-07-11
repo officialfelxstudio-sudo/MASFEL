@@ -98,13 +98,20 @@ export const listenToDoc = (docName: string, callback: (data: any, fromCache: bo
 };
 
 // Helper to save data to any doc
-export const saveDoc = async (docName: string, data: any) => {
+export const saveDoc = async (docName: string, data: any): Promise<boolean> => {
   const docRef = doc(db, 'app_data', docName);
   try {
     await setDoc(docRef, data, { merge: true });
+    return true;
   } catch (error) {
-    console.error(`Error saving doc ${docName}:`, error);
-    handleFirestoreError(error, OperationType.WRITE, `app_data/${docName}`);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const isSizeError = errMsg.includes('1048576') || errMsg.includes('too large') || errMsg.includes('MAX_DOCUMENT_SIZE');
+    if (isSizeError) {
+      console.error(`Firestore document "${docName}" is too large (exceeds 1 MiB). Try reducing image quality or removing some items.`);
+    } else {
+      console.error(`Error saving doc ${docName}:`, error);
+    }
+    return false;
   }
 };
 
@@ -115,8 +122,8 @@ export const subscribeToAbout = (callback: (data: AboutData | null, fromCache: b
   });
 };
 
-export const saveAbout = async (data: AboutData) => {
-  await saveDoc('about', data);
+export const saveAbout = async (data: AboutData): Promise<boolean> => {
+  return await saveDoc('about', data);
 };
 
 export const subscribeToHero = (callback: (url: string | null, fromCache: boolean) => void) => {
@@ -125,8 +132,8 @@ export const subscribeToHero = (callback: (url: string | null, fromCache: boolea
   });
 };
 
-export const saveHero = async (url: string) => {
-  await saveDoc('hero', { url });
+export const saveHero = async (url: string): Promise<boolean> => {
+  return await saveDoc('hero', { url });
 };
 
 export const subscribeToGallery = (callback: (items: GalleryItem[] | null, fromCache: boolean) => void) => {
@@ -135,8 +142,8 @@ export const subscribeToGallery = (callback: (items: GalleryItem[] | null, fromC
   });
 };
 
-export const saveGallery = async (items: GalleryItem[]) => {
-  await saveDoc('gallery', { items });
+export const saveGallery = async (items: GalleryItem[]): Promise<boolean> => {
+  return await saveDoc('gallery', { items });
 };
 
 export const subscribeToStore = (callback: (items: StoreItem[] | null, fromCache: boolean) => void) => {
@@ -145,8 +152,8 @@ export const subscribeToStore = (callback: (items: StoreItem[] | null, fromCache
   });
 };
 
-export const saveStore = async (items: StoreItem[]) => {
-  await saveDoc('store', { items });
+export const saveStore = async (items: StoreItem[]): Promise<boolean> => {
+  return await saveDoc('store', { items });
 };
 
 export const subscribeToSponsors = (callback: (items: SponsorItem[] | null, fromCache: boolean) => void) => {
@@ -155,8 +162,8 @@ export const subscribeToSponsors = (callback: (items: SponsorItem[] | null, from
   });
 };
 
-export const saveSponsors = async (items: SponsorItem[]) => {
-  await saveDoc('sponsors', { items });
+export const saveSponsors = async (items: SponsorItem[]): Promise<boolean> => {
+  return await saveDoc('sponsors', { items });
 };
 
 export const subscribeToHomeLinks = (callback: (items: HomeLink[] | null, fromCache: boolean) => void) => {
@@ -165,8 +172,8 @@ export const subscribeToHomeLinks = (callback: (items: HomeLink[] | null, fromCa
   });
 };
 
-export const saveHomeLinks = async (items: HomeLink[]) => {
-  await saveDoc('homeLinks', { items });
+export const saveHomeLinks = async (items: HomeLink[]): Promise<boolean> => {
+  return await saveDoc('homeLinks', { items });
 };
 
 export const subscribeToNeuConfig = (callback: (config: Partial<NeuConfig> | null, fromCache: boolean) => void) => {

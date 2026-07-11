@@ -25,7 +25,7 @@ export const resizeImage = (file: File, maxWidth: number, maxHeight: number): Pr
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/png'));
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
       } else {
         reject(new Error('Failed to get canvas context'));
       }

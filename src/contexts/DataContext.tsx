@@ -191,49 +191,49 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setAboutDataState(data);
     db.setAbout(data);
     skipSnapshotRef.current['about'] = true;
-    await saveAbout(data);
+    if (!(await saveAbout(data))) alert('Gagal sync ke server. Data tersimpan di perangkat.');
   };
 
   const updateHeroImage = async (url: string) => {
     setHeroImageState(url);
     db.setHeroImage(url);
     skipSnapshotRef.current['hero'] = true;
-    await saveHero(url);
+    if (!(await saveHero(url))) alert('Gagal sync ke server. Data tersimpan di perangkat.');
   };
 
   const updateHomeText = async (data: HomeText) => {
     setHomeTextState(data);
     db.setHomeText(data);
     skipSnapshotRef.current['homeText'] = true;
-    await saveHomeText(data);
+    if (!(await saveHomeText(data))) alert('Gagal sync ke server. Data tersimpan di perangkat.');
   };
 
   const updateGalleryItems = async (items: GalleryItem[]) => {
     setGalleryItemsState(items);
     db.setGallery(items);
     skipSnapshotRef.current['gallery'] = true;
-    await saveGallery(items);
+    if (!(await saveGallery(items))) alert('Gagal sync ke server. Data gambar terlalu besar atau jaringan bermasalah. Data tersimpan di perangkat.');
   };
 
   const updateStoreItems = async (items: StoreItem[]) => {
     setStoreItemsState(items);
     db.setStore(items);
     skipSnapshotRef.current['store'] = true;
-    await saveStore(items);
+    if (!(await saveStore(items))) alert('Gagal sync ke server. Data gambar terlalu besar atau jaringan bermasalah. Data tersimpan di perangkat.');
   };
 
   const updateSponsorItems = async (items: SponsorItem[]) => {
     setSponsorItemsState(items);
     db.setSponsors(items);
     skipSnapshotRef.current['sponsors'] = true;
-    await saveSponsors(items);
+    if (!(await saveSponsors(items))) alert('Gagal sync ke server. Data gambar terlalu besar atau jaringan bermasalah. Data tersimpan di perangkat.');
   };
 
   const updateHomeLinks = async (links: HomeLink[]) => {
     setHomeLinksState(links);
     db.setHomeLinks(links);
     skipSnapshotRef.current['homeLinks'] = true;
-    await saveHomeLinks(links);
+    if (!(await saveHomeLinks(links))) alert('Gagal sync ke server. Data tersimpan di perangkat.');
   };
 
   return (

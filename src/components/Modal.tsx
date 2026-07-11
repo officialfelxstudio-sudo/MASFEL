@@ -98,7 +98,7 @@ export const NeuFileInput: React.FC<NeuFileInputProps> = ({ onFileSelect, label 
       const blob = await res.blob();
       const file = new File([blob], "cropped.png", { type: "image/png" });
       const { resizeImage } = await import('../utils/image');
-      const finalBase64 = await resizeImage(file, 800, 800);
+      const finalBase64 = await resizeImage(file, 600, 600);
       
       setPreview(finalBase64);
       onFileSelect(finalBase64);
