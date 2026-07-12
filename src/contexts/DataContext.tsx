@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { db, AboutData, HomeText, GalleryItem, StoreItem, SponsorItem, HomeLink, CustomTexts } from '../utils/db';
+import { db, AboutData, HomeText, GalleryItem, StoreItem, SponsorItem, HomeLink, GalleryLink, CustomTexts } from '../utils/db';
 import { useAuth } from './AuthContext';
 import {
   subscribeToAbout,
@@ -17,7 +17,9 @@ import {
   subscribeToHomeLinks,
   saveHomeLinks,
   subscribeToCustomTexts,
-  saveCustomTexts
+  saveCustomTexts,
+  subscribeToGalleryLinks,
+  saveGalleryLinks
 } from '../utils/firebase';
 
 interface DataContextType {
@@ -54,6 +56,10 @@ interface DataContextType {
   customTexts: CustomTexts;
   setCustomTexts: (data: CustomTexts) => void;
   updateCustomTexts: (data: CustomTexts) => Promise<void>;
+
+  galleryLinks: GalleryLink[];
+  setGalleryLinks: (links: GalleryLink[]) => void;
+  updateGalleryLinks: (links: GalleryLink[]) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -65,7 +71,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
   const loadedCountRef = useRef(0);
-  const TOTAL_LISTENERS = 8;
+  const TOTAL_LISTENERS = 9;
   const skipSnapshotRef = useRef<Record<string, boolean>>({});
 
   // Initialize with local DB fallbacks
@@ -77,6 +83,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [sponsorItems, setSponsorItemsState] = useState<SponsorItem[]>(db.getSponsors());
   const [homeLinks, setHomeLinksState] = useState<HomeLink[]>(db.getHomeLinks());
   const [customTexts, setCustomTextsState] = useState<CustomTexts>(db.getCustomTexts());
+  const [galleryLinks, setGalleryLinksState] = useState<GalleryLink[]>(db.getGalleryLinks());
 
   // Helper to mark a listener as loaded and hide loading when all done
   const markLoaded = () => {
@@ -198,6 +205,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
+    const unsubGalleryLinks = subscribeToGalleryLinks((firebaseLinks, fromCache) => {
+      if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['galleryLinks']) {
+        skipSnapshotRef.current['galleryLinks'] = false;
+        return;
+      }
+      if (firebaseLinks) {
+        setGalleryLinksState(firebaseLinks);
+      } else if (!fromCache) {
+        setGalleryLinksState(db.getGalleryLinks());
+      }
+    });
+
     return () => {
       unsubAbout();
       unsubHero();
@@ -207,6 +227,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       unsubSponsors();
       unsubHomeLinks();
       unsubCustomTexts();
+      unsubGalleryLinks();
     };
   }, [isOwner]);
 
@@ -267,6 +288,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (!(await saveCustomTexts(data))) alert('Gagal sync custom texts ke server. Data tersimpan di perangkat.');
   };
 
+  const updateGalleryLinks = async (links: GalleryLink[]) => {
+    setGalleryLinksState(links);
+    db.setGalleryLinks(links);
+    skipSnapshotRef.current['galleryLinks'] = true;
+    if (!(await saveGalleryLinks(links))) alert('Gagal sync gallery links ke server. Data tersimpan di perangkat.');
+  };
+
   return (
     <DataContext.Provider value={{
       isLoading,
@@ -301,7 +329,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
       customTexts,
       setCustomTexts: setCustomTextsState,
-      updateCustomTexts
+      updateCustomTexts,
+
+      galleryLinks,
+      setGalleryLinks: setGalleryLinksState,
+      updateGalleryLinks
     }}>
       {children}
     </DataContext.Provider>

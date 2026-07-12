@@ -4,7 +4,7 @@ import { NeuContainer } from './NeuContainer';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { GalleryItem, HomeLink } from '../utils/db';
+import { GalleryItem, GalleryLink } from '../utils/db';
 import { Modal, NeuButton, NeuFileInput, NeuInput } from './Modal';
 import { Trash2, Plus, Edit2, ExternalLink } from 'lucide-react';
 import { useTilt } from '../hooks/useTilt';
@@ -72,8 +72,7 @@ function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
 export default function GallerySection() {
   const { t } = useLang();
   const { isOwner } = useAuth();
-  const { galleryItems: items, updateGalleryItems, homeLinks, updateHomeLinks } = useData();
-  const socialLinks = homeLinks.filter(l => !l.isPrimary);
+  const { galleryItems: items, updateGalleryItems, galleryLinks, updateGalleryLinks } = useData();
 
   const [modalType, setModalType] = useState<'add' | 'edit' | 'delete' | null>(null);
   const [currentItem, setCurrentItem] = useState<GalleryItem | null>(null);
@@ -81,7 +80,7 @@ export default function GallerySection() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [socialModalType, setSocialModalType] = useState<'add' | 'edit' | 'delete' | null>(null);
-  const [currentSocialLink, setCurrentSocialLink] = useState<HomeLink | null>(null);
+  const [currentSocialLink, setCurrentSocialLink] = useState<GalleryLink | null>(null);
   const [socialFormData, setSocialFormData] = useState({ label: '', icon: '', url: '' });
   const [socialDeleteId, setSocialDeleteId] = useState<string | null>(null);
 
@@ -118,13 +117,13 @@ export default function GallerySection() {
     setSocialModalType('add');
   };
 
-  const openEditSocial = (link: HomeLink) => {
+  const openEditSocial = (link: GalleryLink) => {
     setSocialFormData({ label: link.label, icon: link.icon, url: link.url });
     setCurrentSocialLink(link);
     setSocialModalType('edit');
   };
 
-  const openDeleteSocial = (link: HomeLink) => {
+  const openDeleteSocial = (link: GalleryLink) => {
     setCurrentSocialLink(link);
     setSocialDeleteId(link.id);
     setSocialModalType('delete');
@@ -132,10 +131,10 @@ export default function GallerySection() {
 
   const handleSocialSubmit = () => {
     if (socialModalType === 'add') {
-      const newLink: HomeLink = { id: Date.now().toString(), label: socialFormData.label, icon: socialFormData.icon, url: socialFormData.url, isPrimary: false };
-      updateHomeLinks([...homeLinks, newLink]);
+      const newLink: GalleryLink = { id: Date.now().toString(), label: socialFormData.label, icon: socialFormData.icon, url: socialFormData.url };
+      updateGalleryLinks([...galleryLinks, newLink]);
     } else if (socialModalType === 'edit' && currentSocialLink) {
-      updateHomeLinks(homeLinks.map(l => l.id === currentSocialLink.id ? { ...l, label: socialFormData.label, icon: socialFormData.icon, url: socialFormData.url } : l));
+      updateGalleryLinks(galleryLinks.map(l => l.id === currentSocialLink.id ? { ...l, label: socialFormData.label, icon: socialFormData.icon, url: socialFormData.url } : l));
     }
     setSocialModalType(null);
     setCurrentSocialLink(null);
@@ -144,7 +143,7 @@ export default function GallerySection() {
 
   const handleSocialDeleteSubmit = () => {
     if (socialDeleteId) {
-      updateHomeLinks(homeLinks.filter(l => l.id !== socialDeleteId));
+      updateGalleryLinks(galleryLinks.filter(l => l.id !== socialDeleteId));
     }
     setSocialModalType(null);
     setSocialDeleteId(null);
@@ -221,9 +220,9 @@ export default function GallerySection() {
           )}
         </div>
 
-        {(socialLinks.length > 0 || isOwner) && (
+        {(galleryLinks.length > 0 || isOwner) && (
           <motion.div variants={cardVariants} className="flex flex-wrap justify-center items-center gap-3 sm:gap-5 mt-4">
-            {socialLinks.map((link) => {
+            {galleryLinks.map((link) => {
               const platform = getPlatformInfo(link.url);
               return (
                 <div key={link.id} className="relative group">

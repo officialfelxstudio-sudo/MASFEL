@@ -28,6 +28,8 @@ export interface HomeLink {
   isPrimary: boolean;
 }
 
+export type GalleryLink = Omit<HomeLink, 'isPrimary'>;
+
 export interface AboutData {
   text: string;
   buttonLabel: string;
@@ -71,6 +73,8 @@ const defaultHomeLinks: HomeLink[] = [
   { id: 'INSTAGRAM', label: '', icon: 'Instagram', url: '#', isPrimary: false },
   { id: 'twitter', label: '', icon: 'Twitter', url: '#', isPrimary: false },
 ];
+
+const defaultGalleryLinks: GalleryLink[] = [];
 
 const defaultAbout: AboutData = {
   text: "Hello! I am a passionate creator focusing on Neumorphism UI designs and interactive web experiences. \n\nThis personal hub serves as a central point for all my digital endeavors, from showcasing my portfolio to offering exclusive digital products.\n\nI believe in the power of soft UI, smooth animations, and creating immersive experiences that blur the line between digital and physical textures.",
@@ -116,6 +120,9 @@ export const db = {
 
   getHomeLinks: (): HomeLink[] => JSON.parse(localStorage.getItem('db_home_links') || JSON.stringify(defaultHomeLinks)),
   setHomeLinks: (data: HomeLink[]) => localStorage.setItem('db_home_links', JSON.stringify(data)),
+
+  getGalleryLinks: (): GalleryLink[] => JSON.parse(localStorage.getItem('db_gallery_links') || JSON.stringify(defaultGalleryLinks)),
+  setGalleryLinks: (data: GalleryLink[]) => localStorage.setItem('db_gallery_links', JSON.stringify(data)),
 };
 
 // Analytics

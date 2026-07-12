@@ -24,7 +24,7 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
 // Types
-import { GalleryItem, StoreItem, SponsorItem, HomeLink, AboutData, HomeText, CustomTexts } from './db';
+import { GalleryItem, StoreItem, SponsorItem, HomeLink, GalleryLink, AboutData, HomeText, CustomTexts } from './db';
 import { NeuConfig } from '../contexts/NeuContext';
 
 export enum OperationType {
@@ -231,4 +231,14 @@ export const subscribeToCustomTexts = (callback: (data: CustomTexts | null, from
 
 export const saveCustomTexts = async (data: CustomTexts): Promise<boolean> => {
   return await saveDoc('customTexts', data);
+};
+
+export const subscribeToGalleryLinks = (callback: (items: GalleryLink[] | null, fromCache: boolean) => void) => {
+  return listenToDoc('galleryLinks', (data, fromCache) => {
+    callback(data && data.links ? data.links : null, fromCache);
+  });
+};
+
+export const saveGalleryLinks = async (items: GalleryLink[]): Promise<boolean> => {
+  return await saveDoc('galleryLinks', { links: items });
 };
