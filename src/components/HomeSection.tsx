@@ -192,14 +192,9 @@ export default function HomeSection() {
                   <a href={link.url} target="_blank" rel="noopener noreferrer">
                     <NeuContainer shape="flat" className="px-4 py-2.5 flex items-center gap-2.5 text-[var(--text-color)] font-semibold text-sm transition-all hover:scale-105 active:scale-95 rounded-full cursor-pointer">
                       {link.icon ? (
-                        link.icon.startsWith('data:') || link.icon.startsWith('http') ? (
-                          <img src={link.icon} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
-                        ) : (
-                          <>
-                            {platform.faviconUrl && <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />}
-                            {!platform.faviconUrl && renderIcon(link.icon, link.url, 18)}
-                          </>
-                        )
+                        <span className="w-5 h-5 flex items-center justify-center">
+                          {renderIcon(link.icon, link.url, 20)}
+                        </span>
                       ) : platform.faviconUrl ? (
                         <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
                       ) : (

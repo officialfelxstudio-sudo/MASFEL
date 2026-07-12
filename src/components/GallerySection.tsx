@@ -9,6 +9,7 @@ import { Modal, NeuButton, NeuFileInput, NeuInput } from './Modal';
 import { Trash2, Plus, Edit2, ExternalLink } from 'lucide-react';
 import { useTilt } from '../hooks/useTilt';
 import { getPlatformInfo } from '../utils/galleryLinkUtils';
+import { renderIcon } from './IconRenderer';
 
 function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
   item: GalleryItem;
@@ -229,7 +230,9 @@ export default function GallerySection() {
                   <a href={link.url} target="_blank" rel="noopener noreferrer">
                     <NeuContainer shape="flat" className="px-4 py-2.5 flex items-center gap-2.5 text-[var(--text-color)] font-semibold text-sm cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-full">
                       {link.icon ? (
-                        <img src={platform.faviconUrl || link.icon} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                        <span className="w-5 h-5 flex items-center justify-center">
+                          {renderIcon(link.icon, link.url, 20)}
+                        </span>
                       ) : platform.faviconUrl ? (
                         <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
                       ) : (
