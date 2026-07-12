@@ -13,7 +13,6 @@ import StoreSection from './components/StoreSection';
 import SponsorSection from './components/SponsorSection';
 import HiddenLogin from './components/HiddenLogin';
 import Header from './components/Header';
-import { trackPageView } from './utils/db';
 import { isMobile } from './utils/deviceOptimization';
 
 // Lazy load heavy components
@@ -48,7 +47,6 @@ function AppContent() {
   }, [isLoading, fadeLoading]);
 
   useEffect(() => {
-    trackPageView();
     import('./utils/firebase').then(module => {
       module.trackLivePageView();
     });

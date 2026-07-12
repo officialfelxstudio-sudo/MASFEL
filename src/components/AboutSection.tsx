@@ -8,6 +8,7 @@ import { renderIcon } from './IconRenderer';
 import { AboutData } from '../utils/db';
 import { Modal, NeuInput, NeuButton } from './Modal';
 import { Edit2, Image, ShoppingBag, Eye } from 'lucide-react';
+import { subscribeToPageViews } from '../utils/firebase';
 
 function AnimatedCounter({ target, label, icon }: { target: number; label: string; icon: React.ReactNode }) {
   const [count, setCount] = useState(0);
@@ -55,7 +56,14 @@ export default function AboutSection() {
   const { t } = useLang();
   const { isOwner } = useAuth();
   const { aboutData, updateAboutData, galleryItems, storeItems } = useData();
-  const pageViews = parseInt(localStorage.getItem('page_views') || '0');
+  const [pageViews, setPageViews] = useState(0);
+  
+  useEffect(() => {
+    const unsub = subscribeToPageViews((views) => {
+      if (views !== null) setPageViews(views);
+    });
+    return () => unsub();
+  }, []);
   
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState<AboutData>({ text: '', buttonLabel: '', buttonUrl: '', buttonIcon: '' });
