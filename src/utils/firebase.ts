@@ -9,19 +9,19 @@ import {
   increment
 } from 'firebase/firestore';
 
-// Configuration loaded from firebase-applet-config.json
+// Firebase Configuration
 const firebaseConfig = {
-  projectId: "refreshing-equinox-szp7b",
-  appId: "1:781262236602:web:78844afd6ea7aa992ccb83",
-  apiKey: "AIzaSyDBnKkgIvKec1x1TMTXuT22u2B5FmJtjM8",
-  authDomain: "refreshing-equinox-szp7b.firebaseapp.com",
-  databaseId: "ai-studio-masfel-7de6eb16-f25c-437a-8e32-4bfa89b34a29",
-  storageBucket: "refreshing-equinox-szp7b.firebasestorage.app",
-  messagingSenderId: "781262236602"
+  apiKey: "AIzaSyAiPtDx5JE_TfwyTq0NmOTLCkr5cfXMkl0",
+  authDomain: "masf33l-website.firebaseapp.com",
+  projectId: "masf33l-website",
+  storageBucket: "masf33l-website.firebasestorage.app",
+  messagingSenderId: "549758015117",
+  appId: "1:549758015117:web:30051eb446e936501034c4",
+  measurementId: "G-9RZZEH2H47"
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.databaseId);
+export const db = getFirestore(app);
 
 // Types
 import { GalleryItem, StoreItem, SponsorItem, HomeLink, AboutData, HomeText, CustomTexts } from './db';
@@ -76,19 +76,22 @@ export const listenToDoc = (docName: string, callback: (data: any, fromCache: bo
   const docRef = doc(db, 'app_data', docName);
   return onSnapshot(docRef, (snapshot) => {
     const fromCache = snapshot.metadata.fromCache;
+    const hasPendingWrites = snapshot.metadata.hasPendingWrites;
     if (snapshot.exists()) {
+      console.log(`[Sync] ${docName} updated (fromCache: ${fromCache}, pending: ${hasPendingWrites})`);
       callback(snapshot.data(), fromCache);
     } else {
+      console.log(`[Sync] ${docName} empty (fromCache: ${fromCache})`);
       callback(null, fromCache);
     }
   }, (error) => {
-    console.error(`Error listening to doc ${docName}:`, error);
+    console.error(`[Sync] Error listening to doc ${docName}:`, error);
     try {
       callback(null, false);
     } catch (fallbackError) {
       console.error("Failed to execute fallback callback:", fallbackError);
     }
-    console.warn(`Firestore listener for "${docName}" lost. Reconnecting in 5s...`);
+    console.warn(`[Sync] Firestore listener for "${docName}" lost. Reconnecting in 5s...`);
     setTimeout(() => {
       listenToDoc(docName, callback);
     }, 5000);
@@ -101,20 +104,21 @@ export const saveDoc = async (docName: string, data: any, retries = 2): Promise<
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       await setDoc(docRef, data, { merge: true });
+      console.log(`[Sync] ${docName} saved successfully`);
       return true;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
       const isSizeError = errMsg.includes('1048576') || errMsg.includes('too large') || errMsg.includes('MAX_DOCUMENT_SIZE');
       if (isSizeError) {
-        console.error(`Firestore document "${docName}" is too large (exceeds 1 MiB). Try reducing image quality or removing some items.`);
+        console.error(`[Sync] Document "${docName}" is too large (exceeds 1 MiB). Try reducing image quality or removing some items.`);
         return false;
       }
       if (attempt < retries) {
-        console.warn(`Retry ${attempt + 1}/${retries} for doc "${docName}"...`);
+        console.warn(`[Sync] Retry ${attempt + 1}/${retries} for doc "${docName}"...`);
         await new Promise(r => setTimeout(r, 1000));
         continue;
       }
-      console.error(`Error saving doc ${docName} after ${retries + 1} attempts:`, error);
+      console.error(`[Sync] Error saving doc ${docName} after ${retries + 1} attempts:`, error);
       return false;
     }
   }
@@ -188,8 +192,8 @@ export const subscribeToNeuConfig = (callback: (config: Partial<NeuConfig> | nul
   });
 };
 
-export const saveNeuConfig = async (config: Partial<NeuConfig>) => {
-  await saveDoc('neuConfig', config);
+export const saveNeuConfig = async (config: Partial<NeuConfig>): Promise<boolean> => {
+  return await saveDoc('neuConfig', config);
 };
 
 // Live Analytics
@@ -215,8 +219,8 @@ export const subscribeToHomeText = (callback: (data: HomeText | null, fromCache:
   });
 };
 
-export const saveHomeText = async (data: HomeText) => {
-  await saveDoc('homeText', data);
+export const saveHomeText = async (data: HomeText): Promise<boolean> => {
+  return await saveDoc('homeText', data);
 };
 
 export const subscribeToCustomTexts = (callback: (data: CustomTexts | null, fromCache: boolean) => void) => {
@@ -225,6 +229,6 @@ export const subscribeToCustomTexts = (callback: (data: CustomTexts | null, from
   });
 };
 
-export const saveCustomTexts = async (data: CustomTexts) => {
-  await saveDoc('customTexts', data);
+export const saveCustomTexts = async (data: CustomTexts): Promise<boolean> => {
+  return await saveDoc('customTexts', data);
 };

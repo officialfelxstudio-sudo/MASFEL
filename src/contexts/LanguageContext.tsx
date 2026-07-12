@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { db, CustomTexts } from '../utils/db';
-import { subscribeToCustomTexts } from '../utils/firebase';
+import { useData } from './DataContext';
 
 type Language = 'en' | 'id';
 
@@ -38,8 +37,8 @@ interface LanguageContextType {
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  const { customTexts } = useData();
   const [lang, setLang] = useState<Language>('en');
-  const [customTexts, setCustomTexts] = useState<CustomTexts>(db.getCustomTexts());
 
   useEffect(() => {
     const saved = localStorage.getItem('lang') as Language;
@@ -53,17 +52,6 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         setLang('en');
       }
     }
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = subscribeToCustomTexts((data, fromCache) => {
-      if (data && !fromCache) {
-        setCustomTexts(data);
-      } else if (!data && !fromCache) {
-        setCustomTexts(db.getCustomTexts());
-      }
-    });
-    return () => unsubscribe();
   }, []);
 
   const toggleLang = () => {

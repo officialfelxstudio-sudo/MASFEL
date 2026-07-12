@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { subscribeToNeuConfig } from '../utils/firebase';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { subscribeToNeuConfig, saveNeuConfig } from '../utils/firebase';
 
 export type NeuShape = 'flat' | 'concave' | 'convex' | 'pressed';
 
@@ -24,11 +24,13 @@ const defaultConfig: NeuConfig = {
 interface NeuContextType {
   config: NeuConfig;
   updateConfig: (newConfig: Partial<NeuConfig>) => void;
+  saveConfig: () => Promise<boolean>;
 }
 
 export const NeuContext = createContext<NeuContextType | undefined>(undefined);
 
 export const NeuProvider = ({ children }: { children: ReactNode }) => {
+  const skipSnapshotRef = useRef(false);
   const [config, setConfig] = useState<NeuConfig>(() => {
     const saved = localStorage.getItem('neuConfig_v4');
     return saved ? JSON.parse(saved) : defaultConfig;
@@ -37,6 +39,10 @@ export const NeuProvider = ({ children }: { children: ReactNode }) => {
   // Subscribe to real-time changes in Firestore
   useEffect(() => {
     const unsubscribe = subscribeToNeuConfig((firebaseConfig, fromCache) => {
+      if (skipSnapshotRef.current) {
+        skipSnapshotRef.current = false;
+        return;
+      }
       if (firebaseConfig && !fromCache) {
         setConfig(prev => ({
           ...prev,
@@ -102,8 +108,14 @@ export const NeuProvider = ({ children }: { children: ReactNode }) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
   };
 
+  const saveConfig = async (): Promise<boolean> => {
+    skipSnapshotRef.current = true;
+    const success = await saveNeuConfig(config);
+    return success;
+  };
+
   return (
-    <NeuContext.Provider value={{ config, updateConfig }}>
+    <NeuContext.Provider value={{ config, updateConfig, saveConfig }}>
       {children}
     </NeuContext.Provider>
   );

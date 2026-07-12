@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNeu, NeuShape } from '../contexts/NeuContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { NeuContainer } from './NeuContainer';
+import SyncStatus from './SyncStatus';
 import { useDebounce } from '../hooks/useDebounce';
 import { 
   Settings, 
@@ -22,10 +23,11 @@ import {
   ChevronDown, 
   ChevronUp, 
   Plus, 
-  Trash2 
+  Trash2,
+  Cloud,
+  Loader2 
 } from 'lucide-react';
 import { 
-  db, 
   HomeText, 
   AboutData, 
   GalleryItem, 
@@ -33,42 +35,24 @@ import {
   SponsorItem,
   CustomTexts
 } from '../utils/db';
-import { 
-  saveNeuConfig,
-  subscribeToCustomTexts,
-  saveCustomTexts,
-  saveHomeText,
-  saveAbout,
-  saveGallery,
-  saveStore,
-  saveSponsors
-} from '../utils/firebase';
+import { syncLocalDataToFirebase } from '../utils/syncToFirebase';
 
 export default function AdminPanel() {
-  const { config, updateConfig } = useNeu();
+  const { config, updateConfig, saveConfig } = useNeu();
   const { isOwner, logout } = useAuth();
   const { 
     homeText, setHomeText, updateHomeText,
     aboutData, setAboutData, updateAboutData,
     galleryItems, setGalleryItems, updateGalleryItems,
     storeItems, setStoreItems, updateStoreItems,
-    sponsorItems, setSponsorItems, updateSponsorItems
+    sponsorItems, setSponsorItems, updateSponsorItems,
+    customTexts, setCustomTexts, updateCustomTexts
   } = useData();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState<'design' | 'content'>('design');
   const [activeSection, setActiveSection] = useState<'titles' | 'home' | 'about' | 'gallery' | 'store' | 'sponsors' | null>('titles');
-
-  // Custom texts (separate subscription since it's not in DataContext)
-  const [customTexts, setCustomTexts] = useState<CustomTexts>(db.getCustomTexts());
-
-  useEffect(() => {
-    if (!isOwner) return;
-    const unsubCustomTexts = subscribeToCustomTexts((data, fromCache) => {
-      if (data && !fromCache) setCustomTexts(data);
-    });
-    return () => { unsubCustomTexts(); };
-  }, [isOwner]);
 
   // Save Handlers - debounced 500ms to batch rapid edits
   const handleSaveHomeText = useDebounce(async (updated: HomeText) => {
@@ -76,9 +60,7 @@ export default function AdminPanel() {
   }, 500);
 
   const handleSaveCustomTexts = useDebounce(async (updated: CustomTexts) => {
-    setCustomTexts(updated);
-    db.setCustomTexts(updated);
-    await saveCustomTexts(updated);
+    await updateCustomTexts(updated);
   }, 500);
 
   const handleSaveAbout = useDebounce(async (updated: AboutData) => {
@@ -97,11 +79,23 @@ export default function AdminPanel() {
     await updateSponsorItems(updated);
   }, 500);
 
+  const handleSync = async () => {
+    setIsSyncing(true);
+    const success = await syncLocalDataToFirebase();
+    setIsSyncing(false);
+    if (success) alert('Data berhasil di-sync ke Cloud!');
+    else alert('Sync gagal. Coba lagi.');
+  };
+
   if (!isOwner) return null;
 
   const handleSaveConfig = async () => {
     try {
-      await saveNeuConfig(config);
+      const success = await saveConfig();
+      if (!success) {
+        alert('Gagal save config ke server. Coba lagi.');
+        return;
+      }
       setIsSaved(true);
       setTimeout(() => {
         setIsSaved(false);
@@ -109,6 +103,7 @@ export default function AdminPanel() {
       }, 1500);
     } catch (err) {
       console.error('Failed to save settings:', err);
+      alert('Gagal save config. Coba lagi.');
     }
   };
 
@@ -716,15 +711,31 @@ export default function AdminPanel() {
         )}
 
         {/* Footer actions */}
-        <button 
-          onClick={logout}
-          className="p-3 flex items-center justify-center gap-2 rounded-xl text-red-500 transition-all font-bold text-xs hover:scale-[1.02] mt-auto"
-          style={{
-            boxShadow: `3px 3px 6px var(--neu-shadow-dark), -3px -3px 6px var(--neu-shadow-light)`
-          }}
-        >
-          <LogOut size={14} /> Logout
-        </button>
+        <div className="flex flex-col gap-2 mt-auto">
+          <SyncStatus />
+          <div className="flex gap-3">
+          <button 
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="p-3 flex items-center justify-center gap-2 rounded-xl text-blue-500 transition-all font-bold text-xs hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+            style={{
+              boxShadow: `3px 3px 6px var(--neu-shadow-dark), -3px -3px 6px var(--neu-shadow-light)`
+            }}
+          >
+            {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <Cloud size={14} />}
+            {isSyncing ? 'Syncing...' : 'Sync to Cloud'}
+          </button>
+          <button 
+            onClick={logout}
+            className="p-3 flex items-center justify-center gap-2 rounded-xl text-red-500 transition-all font-bold text-xs hover:scale-[1.02] flex-1"
+            style={{
+              boxShadow: `3px 3px 6px var(--neu-shadow-dark), -3px -3px 6px var(--neu-shadow-light)`
+            }}
+          >
+            <LogOut size={14} /> Logout
+          </button>
+          </div>
+        </div>
       </NeuContainer>
     </div>
   );

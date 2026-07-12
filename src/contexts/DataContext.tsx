@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { db, AboutData, HomeText, GalleryItem, StoreItem, SponsorItem, HomeLink } from '../utils/db';
+import { db, AboutData, HomeText, GalleryItem, StoreItem, SponsorItem, HomeLink, CustomTexts } from '../utils/db';
 import { useAuth } from './AuthContext';
 import {
   subscribeToAbout,
@@ -15,11 +15,14 @@ import {
   subscribeToSponsors,
   saveSponsors,
   subscribeToHomeLinks,
-  saveHomeLinks
+  saveHomeLinks,
+  subscribeToCustomTexts,
+  saveCustomTexts
 } from '../utils/firebase';
 
 interface DataContextType {
   isLoading: boolean;
+  lastSyncTime: number;
   aboutData: AboutData;
   setAboutData: (data: AboutData) => void;
   updateAboutData: (data: AboutData) => Promise<void>;
@@ -47,6 +50,10 @@ interface DataContextType {
   homeLinks: HomeLink[];
   setHomeLinks: (links: HomeLink[]) => void;
   updateHomeLinks: (links: HomeLink[]) => Promise<void>;
+
+  customTexts: CustomTexts;
+  setCustomTexts: (data: CustomTexts) => void;
+  updateCustomTexts: (data: CustomTexts) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -56,8 +63,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   
   // Loading state - starts true until Firebase data arrives
   const [isLoading, setIsLoading] = useState(true);
+  const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
   const loadedCountRef = useRef(0);
-  const TOTAL_LISTENERS = 7;
+  const TOTAL_LISTENERS = 8;
   const skipSnapshotRef = useRef<Record<string, boolean>>({});
 
   // Initialize with local DB fallbacks
@@ -68,10 +76,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [storeItems, setStoreItemsState] = useState<StoreItem[]>(db.getStore());
   const [sponsorItems, setSponsorItemsState] = useState<SponsorItem[]>(db.getSponsors());
   const [homeLinks, setHomeLinksState] = useState<HomeLink[]>(db.getHomeLinks());
+  const [customTexts, setCustomTextsState] = useState<CustomTexts>(db.getCustomTexts());
 
   // Helper to mark a listener as loaded and hide loading when all done
   const markLoaded = () => {
     loadedCountRef.current += 1;
+    setLastSyncTime(Date.now());
     if (loadedCountRef.current >= TOTAL_LISTENERS) {
       setIsLoading(false);
     }
@@ -175,6 +185,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
+    const unsubCustomTexts = subscribeToCustomTexts((firebaseTexts, fromCache) => {
+      if (!fromCache) markLoaded();
+      if (skipSnapshotRef.current['customTexts']) {
+        skipSnapshotRef.current['customTexts'] = false;
+        return;
+      }
+      if (firebaseTexts) {
+        setCustomTextsState(firebaseTexts);
+      } else if (!fromCache) {
+        setCustomTextsState(db.getCustomTexts());
+      }
+    });
+
     return () => {
       unsubAbout();
       unsubHero();
@@ -183,6 +206,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       unsubStore();
       unsubSponsors();
       unsubHomeLinks();
+      unsubCustomTexts();
     };
   }, [isOwner]);
 
@@ -236,9 +260,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (!(await saveHomeLinks(links))) alert('Gagal sync ke server. Data tersimpan di perangkat.');
   };
 
+  const updateCustomTexts = async (data: CustomTexts) => {
+    setCustomTextsState(data);
+    db.setCustomTexts(data);
+    skipSnapshotRef.current['customTexts'] = true;
+    if (!(await saveCustomTexts(data))) alert('Gagal sync custom texts ke server. Data tersimpan di perangkat.');
+  };
+
   return (
     <DataContext.Provider value={{
       isLoading,
+      lastSyncTime,
       aboutData,
       setAboutData: setAboutDataState,
       updateAboutData,
@@ -265,7 +297,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       
       homeLinks,
       setHomeLinks: setHomeLinksState,
-      updateHomeLinks
+      updateHomeLinks,
+
+      customTexts,
+      setCustomTexts: setCustomTextsState,
+      updateCustomTexts
     }}>
       {children}
     </DataContext.Provider>
