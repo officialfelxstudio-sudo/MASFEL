@@ -15,12 +15,13 @@ const firebaseConfig = {
   appId: "1:781262236602:web:78844afd6ea7aa992ccb83",
   apiKey: "AIzaSyDBnKkgIvKec1x1TMTXuT22u2B5FmJtjM8",
   authDomain: "refreshing-equinox-szp7b.firebaseapp.com",
+  databaseId: "ai-studio-masfel-7de6eb16-f25c-437a-8e32-4bfa89b34a29",
   storageBucket: "refreshing-equinox-szp7b.firebasestorage.app",
   messagingSenderId: "781262236602"
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = getFirestore(app, firebaseConfig.databaseId);
 
 // Types
 import { GalleryItem, StoreItem, SponsorItem, HomeLink, AboutData, HomeText, CustomTexts } from './db';
@@ -82,6 +83,11 @@ export const listenToDoc = (docName: string, callback: (data: any, fromCache: bo
     }
   }, (error) => {
     console.error(`Error listening to doc ${docName}:`, error);
+    try {
+      callback(null, false);
+    } catch (fallbackError) {
+      console.error("Failed to execute fallback callback:", fallbackError);
+    }
     console.warn(`Firestore listener for "${docName}" lost. Reconnecting in 5s...`);
     setTimeout(() => {
       listenToDoc(docName, callback);
@@ -168,12 +174,12 @@ export const saveSponsors = async (items: SponsorItem[]): Promise<boolean> => {
 
 export const subscribeToHomeLinks = (callback: (items: HomeLink[] | null, fromCache: boolean) => void) => {
   return listenToDoc('homeLinks', (data, fromCache) => {
-    callback(data && data.items ? data.items : null, fromCache);
+    callback(data && data.links ? data.links : null, fromCache);
   });
 };
 
 export const saveHomeLinks = async (items: HomeLink[]): Promise<boolean> => {
-  return await saveDoc('homeLinks', { items });
+  return await saveDoc('homeLinks', { links: items });
 };
 
 export const subscribeToNeuConfig = (callback: (config: Partial<NeuConfig> | null, fromCache: boolean) => void) => {
