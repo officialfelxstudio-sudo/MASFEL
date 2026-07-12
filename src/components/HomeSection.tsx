@@ -184,9 +184,8 @@ export default function HomeSection() {
             {socialLinks.map((link) => {
               const platform = getPlatformInfo(link.url);
               return (
-                <motion.div
+                <div
                   key={link.id}
-                  variants={buttonVariants}
                   className="relative group"
                 >
                   <a href={link.url} target="_blank" rel="noopener noreferrer">
@@ -209,7 +208,7 @@ export default function HomeSection() {
                       <button onClick={() => openDelete(link)} className="p-1 text-red-500 hover:scale-110"><Trash2 size={14}/></button>
                     </div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
           </div>
