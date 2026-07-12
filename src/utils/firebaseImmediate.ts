@@ -31,7 +31,7 @@ export async function getHeroFromFirebase(): Promise<string | null> {
 
 export async function getHomeTextFromFirebase(): Promise<HomeText | null> {
   try {
-    const docRef = doc(db, 'app_data', 'home_text');
+    const docRef = doc(db, 'app_data', 'homeText');
     const snapshot = await getDoc(docRef);
     return snapshot.exists() ? (snapshot.data() as HomeText) : null;
   } catch (error) {
@@ -75,7 +75,7 @@ export async function getSponsorsFromFirebase(): Promise<SponsorItem[] | null> {
 
 export async function getHomeLinksFromFirebase(): Promise<HomeLink[] | null> {
   try {
-    const docRef = doc(db, 'app_data', 'home_links');
+    const docRef = doc(db, 'app_data', 'homeLinks');
     const snapshot = await getDoc(docRef);
     return snapshot.exists() && snapshot.data().links ? snapshot.data().links : null;
   } catch (error) {

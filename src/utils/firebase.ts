@@ -15,13 +15,12 @@ const firebaseConfig = {
   appId: "1:781262236602:web:78844afd6ea7aa992ccb83",
   apiKey: "AIzaSyDBnKkgIvKec1x1TMTXuT22u2B5FmJtjM8",
   authDomain: "refreshing-equinox-szp7b.firebaseapp.com",
-  databaseId: "ai-studio-masfel-7de6eb16-f25c-437a-8e32-4bfa89b34a29",
   storageBucket: "refreshing-equinox-szp7b.firebasestorage.app",
   messagingSenderId: "781262236602"
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.databaseId);
+export const db = getFirestore(app);
 
 // Types
 import { GalleryItem, StoreItem, SponsorItem, HomeLink, AboutData, HomeText, CustomTexts } from './db';
@@ -83,12 +82,10 @@ export const listenToDoc = (docName: string, callback: (data: any, fromCache: bo
     }
   }, (error) => {
     console.error(`Error listening to doc ${docName}:`, error);
-    try {
-      callback(null, false);
-    } catch (fallbackError) {
-      console.error("Failed to execute local fallback callback:", fallbackError);
-    }
-    console.warn(`Firestore listener for "${docName}" lost connection. SDK will auto-reconnect.`);
+    console.warn(`Firestore listener for "${docName}" lost. Reconnecting in 5s...`);
+    setTimeout(() => {
+      listenToDoc(docName, callback);
+    }, 5000);
   });
 };
 

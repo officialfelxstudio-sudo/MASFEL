@@ -25,13 +25,13 @@ export async function syncLocalDataToFirebase() {
     const updates = [
       setDoc(doc(firebaseDb, 'app_data', 'about'), aboutData || {}, { merge: true }),
       setDoc(doc(firebaseDb, 'app_data', 'hero'), heroImage || {}, { merge: true }),
-      setDoc(doc(firebaseDb, 'app_data', 'home_text'), homeText || {}, { merge: true }),
+      setDoc(doc(firebaseDb, 'app_data', 'homeText'), homeText || {}, { merge: true }),
       setDoc(doc(firebaseDb, 'app_data', 'gallery'), gallery || {}, { merge: true }),
       setDoc(doc(firebaseDb, 'app_data', 'store'), store || {}, { merge: true }),
       setDoc(doc(firebaseDb, 'app_data', 'sponsors'), sponsors || {}, { merge: true }),
-      setDoc(doc(firebaseDb, 'app_data', 'home_links'), { links: Array.isArray(homeLinks) ? homeLinks : [] }, { merge: true }),
-      setDoc(doc(firebaseDb, 'app_data', 'custom_texts'), customTexts || {}, { merge: true }),
-      setDoc(doc(firebaseDb, 'app_data', 'neu_config'), neuConfig || {}, { merge: true }),
+      setDoc(doc(firebaseDb, 'app_data', 'homeLinks'), { links: Array.isArray(homeLinks) ? homeLinks : [] }, { merge: true }),
+      setDoc(doc(firebaseDb, 'app_data', 'customTexts'), customTexts || {}, { merge: true }),
+      setDoc(doc(firebaseDb, 'app_data', 'neuConfig'), neuConfig || {}, { merge: true }),
     ];
 
     await Promise.all(updates);
