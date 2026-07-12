@@ -33,24 +33,24 @@ function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
           <div className="flex flex-col gap-2 flex-1">
             <h3 className="text-2xl font-bold">{item.title || '\u00A0'}</h3>
             <p className="opacity-70 text-sm flex-1">{item.desc || '\u00A0'}</p>
-            {item.link && (() => {
-              const platform = getPlatformInfo(item.link);
-              return (
-                <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-1">
-                  <NeuContainer shape="flat" className="py-2 px-3 flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer hover:scale-[1.03] active:scale-95 transition-transform rounded-xl">
-                    {platform.faviconUrl ? (
-                      <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
-                    ) : (
-                      <ExternalLink size={16} />
-                    )}
-                    {platform.label}
-                  </NeuContainer>
-                </a>
-              );
-            })()}
           </div>
         </NeuContainer>
       </div>
+      {item.link && (() => {
+        const platform = getPlatformInfo(item.link);
+        return (
+          <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+            <NeuContainer shape="flat" className="py-2 px-3 flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer hover:scale-[1.03] active:scale-95 transition-transform rounded-xl text-[var(--text-color)]">
+              {platform.faviconUrl ? (
+                <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+              ) : (
+                <ExternalLink size={16} />
+              )}
+              {platform.label}
+            </NeuContainer>
+          </a>
+        );
+      })()}
       {isOwner && (
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <button onClick={onEdit} className="transition-transform hover:scale-110">
