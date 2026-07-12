@@ -32,7 +32,7 @@ export function getPlatformInfo(url: string): PlatformInfo {
     }
 
     return {
-      label: hostname,
+      label: hostname.replace(/\.(com|net|org|io|co|id|me|gg|dev|app|cc|xyz|link)$/i, ''),
       faviconUrl: getFaviconUrl(hostname),
       color: '#888',
     };
