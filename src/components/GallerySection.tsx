@@ -6,8 +6,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { GalleryItem } from '../utils/db';
 import { Modal, NeuButton, NeuFileInput, NeuInput } from './Modal';
-import { Trash2, Plus, Edit2 } from 'lucide-react';
+import { Trash2, Plus, Edit2, ExternalLink } from 'lucide-react';
 import { useTilt } from '../hooks/useTilt';
+import { getPlatformInfo } from '../utils/galleryLinkUtils';
 
 function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
   item: GalleryItem;
@@ -32,6 +33,21 @@ function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
           <div className="flex flex-col gap-2 flex-1">
             <h3 className="text-2xl font-bold">{item.title || '\u00A0'}</h3>
             <p className="opacity-70 text-sm flex-1">{item.desc || '\u00A0'}</p>
+            {item.link && (() => {
+              const platform = getPlatformInfo(item.link);
+              return (
+                <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-1">
+                  <NeuContainer shape="flat" className="py-2 px-3 flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer hover:scale-[1.03] active:scale-95 transition-transform rounded-xl">
+                    {platform.faviconUrl ? (
+                      <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                    ) : (
+                      <ExternalLink size={16} />
+                    )}
+                    {platform.label}
+                  </NeuContainer>
+                </a>
+              );
+            })()}
           </div>
         </NeuContainer>
       </div>
@@ -60,7 +76,7 @@ export default function GallerySection() {
   
   const [modalType, setModalType] = useState<'add' | 'edit' | 'delete' | null>(null);
   const [currentItem, setCurrentItem] = useState<GalleryItem | null>(null);
-  const [formData, setFormData] = useState({ url: '', title: '', desc: '' });
+  const [formData, setFormData] = useState({ url: '', title: '', desc: '', link: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleAddSubmit = () => {
@@ -75,7 +91,7 @@ export default function GallerySection() {
       updateGalleryItems(newItems);
       
       setModalType(null);
-      setFormData({ url: '', title: '', desc: '' });
+      setFormData({ url: '', title: '', desc: '', link: '' });
       setCurrentItem(null);
     }
   };
@@ -137,7 +153,7 @@ export default function GallerySection() {
         <div className="flex flex-wrap justify-center gap-6 md:gap-12 w-full max-w-5xl">
           {items.map((item) => (
             <GalleryCard key={item.id} item={item} variants={cardVariants} isOwner={isOwner}
-              onEdit={() => { setCurrentItem(item); setFormData({ url: item.url, title: item.title || '', desc: item.desc || '' }); setModalType('edit'); }}
+              onEdit={() => { setCurrentItem(item); setFormData({ url: item.url, title: item.title || '', desc: item.desc || '', link: item.link || '' }); setModalType('edit'); }}
               onDelete={() => { setDeleteId(item.id); setModalType('delete'); }}
             />
           ))}
@@ -149,7 +165,7 @@ export default function GallerySection() {
               className="relative h-full w-full sm:w-[calc(50%-1rem)] max-w-sm min-h-[350px]"
             >
               <NeuContainer 
-                onClick={() => { setFormData({ url: '', title: '', desc: '' }); setModalType('add'); }}
+                onClick={() => { setFormData({ url: '', title: '', desc: '', link: '' }); setModalType('add'); }}
                 className="flex flex-col items-center justify-center p-6 rounded-3xl h-full cursor-pointer opacity-60 hover:opacity-100 transition-all border-4 border-dashed border-[var(--text-color)] text-[var(--text-color)]"
                 style={{ background: 'transparent', boxShadow: 'none' }}
               >
@@ -171,6 +187,7 @@ export default function GallerySection() {
           />
           <NeuInput placeholder="Title (Optional)" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
           <NeuInput placeholder="Description (Optional)" value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} />
+          <NeuInput placeholder="Download Link (Optional)" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
           <div className="flex gap-4 mt-2">
             <NeuButton className="flex-1" onClick={() => setModalType(null)}>Cancel</NeuButton>
             <NeuButton className="flex-1" onClick={handleAddSubmit}>Save</NeuButton>

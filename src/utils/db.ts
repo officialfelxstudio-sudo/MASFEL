@@ -3,6 +3,7 @@ export interface GalleryItem {
   url: string;
   title?: string;
   desc?: string;
+  link?: string;
 }
 
 export interface StoreItem {
