@@ -72,7 +72,8 @@ function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
 export default function GallerySection() {
   const { t } = useLang();
   const { isOwner } = useAuth();
-  const { galleryItems: items, updateGalleryItems } = useData();
+  const { galleryItems: items, updateGalleryItems, homeLinks } = useData();
+  const socialLinks = homeLinks.filter(l => !l.isPrimary);
   
   const [modalType, setModalType] = useState<'add' | 'edit' | 'delete' | null>(null);
   const [currentItem, setCurrentItem] = useState<GalleryItem | null>(null);
@@ -175,6 +176,28 @@ export default function GallerySection() {
             </motion.div>
           )}
         </div>
+
+        {socialLinks.length > 0 && (
+          <motion.div variants={cardVariants} className="flex flex-wrap justify-center gap-4 sm:gap-6 mt-4">
+            {socialLinks.map((link) => {
+              const platform = getPlatformInfo(link.url);
+              return (
+                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer">
+                  <NeuContainer shape="flat" className="px-4 py-2.5 flex items-center gap-2.5 text-[var(--text-color)] font-semibold text-sm cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-full">
+                    {link.icon ? (
+                      <img src={platform.faviconUrl || link.icon} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                    ) : platform.faviconUrl ? (
+                      <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                    ) : (
+                      <ExternalLink size={18} />
+                    )}
+                    {platform.label}
+                  </NeuContainer>
+                </a>
+              );
+            })}
+          </motion.div>
+        )}
       </div>
 
       <Modal isOpen={modalType === 'add' || modalType === 'edit'} onClose={() => setModalType(null)} title={modalType === 'add' ? t('uploadNewImage') : t('edit')}>
