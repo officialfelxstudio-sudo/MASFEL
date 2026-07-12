@@ -7,7 +7,8 @@ import { useData } from '../contexts/DataContext';
 import { renderIcon } from './IconRenderer';
 import { HomeLink } from '../utils/db';
 import { Modal, NeuInput, NeuButton, NeuFileInput } from './Modal';
-import { Plus, Edit2, Trash2, Camera } from 'lucide-react';
+import { Plus, Edit2, Trash2, Camera, ExternalLink } from 'lucide-react';
+import { getPlatformInfo } from '../utils/galleryLinkUtils';
 
 export default function HomeSection() {
   const { t } = useLang();
@@ -179,26 +180,43 @@ export default function HomeSection() {
         </div>
 
         <div className="flex flex-col items-center gap-4 mt-4">
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            {socialLinks.map((link) => (
-              <motion.div 
-                key={link.id} 
-                variants={buttonVariants}
-                className="relative group"
-              >
-                <a href={link.url} target="_blank" rel="noopener noreferrer">
-                  <NeuContainer shape="flat" className="p-2 sm:p-2.5 text-[var(--text-color)] transition-all hover:scale-110 active:scale-95 rounded-full flex items-center justify-center">
-                    {renderIcon(link.icon, link.url, 18)}
-                  </NeuContainer>
-                </a>
-                {isOwner && (
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--bg-color)] rounded-lg p-1 shadow-lg z-20">
-                    <button onClick={() => openEdit(link)} className="p-1 text-[var(--text-color)] hover:scale-110"><Edit2 size={14}/></button>
-                    <button onClick={() => openDelete(link)} className="p-1 text-red-500 hover:scale-110"><Trash2 size={14}/></button>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+            {socialLinks.map((link) => {
+              const platform = getPlatformInfo(link.url);
+              return (
+                <motion.div
+                  key={link.id}
+                  variants={buttonVariants}
+                  className="relative group"
+                >
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <NeuContainer shape="flat" className="px-4 py-2.5 flex items-center gap-2.5 text-[var(--text-color)] font-semibold text-sm transition-all hover:scale-105 active:scale-95 rounded-full cursor-pointer">
+                      {link.icon ? (
+                        link.icon.startsWith('data:') || link.icon.startsWith('http') ? (
+                          <img src={link.icon} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                        ) : (
+                          <>
+                            {platform.faviconUrl && <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />}
+                            {!platform.faviconUrl && renderIcon(link.icon, link.url, 18)}
+                          </>
+                        )
+                      ) : platform.faviconUrl ? (
+                        <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                      ) : (
+                        <ExternalLink size={18} />
+                      )}
+                      {platform.label}
+                    </NeuContainer>
+                  </a>
+                  {isOwner && (
+                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--bg-color)] rounded-lg p-1 shadow-lg z-20">
+                      <button onClick={() => openEdit(link)} className="p-1 text-[var(--text-color)] hover:scale-110"><Edit2 size={14}/></button>
+                      <button onClick={() => openDelete(link)} className="p-1 text-red-500 hover:scale-110"><Trash2 size={14}/></button>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
           {isOwner && (
             <button onClick={() => openAdd(false)} className="flex items-center gap-2 text-[var(--text-color)] opacity-50 hover:opacity-100 text-sm">
