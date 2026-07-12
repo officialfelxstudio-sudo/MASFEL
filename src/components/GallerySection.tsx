@@ -4,7 +4,7 @@ import { NeuContainer } from './NeuContainer';
 import { useLang } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { GalleryItem } from '../utils/db';
+import { GalleryItem, HomeLink } from '../utils/db';
 import { Modal, NeuButton, NeuFileInput, NeuInput } from './Modal';
 import { Trash2, Plus, Edit2, ExternalLink } from 'lucide-react';
 import { useTilt } from '../hooks/useTilt';
@@ -72,13 +72,18 @@ function GalleryCard({ item, variants, isOwner, onEdit, onDelete }: {
 export default function GallerySection() {
   const { t } = useLang();
   const { isOwner } = useAuth();
-  const { galleryItems: items, updateGalleryItems, homeLinks } = useData();
+  const { galleryItems: items, updateGalleryItems, homeLinks, updateHomeLinks } = useData();
   const socialLinks = homeLinks.filter(l => !l.isPrimary);
-  
+
   const [modalType, setModalType] = useState<'add' | 'edit' | 'delete' | null>(null);
   const [currentItem, setCurrentItem] = useState<GalleryItem | null>(null);
   const [formData, setFormData] = useState({ url: '', title: '', desc: '', link: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const [socialModalType, setSocialModalType] = useState<'add' | 'edit' | 'delete' | null>(null);
+  const [currentSocialLink, setCurrentSocialLink] = useState<HomeLink | null>(null);
+  const [socialFormData, setSocialFormData] = useState({ label: '', icon: '', url: '' });
+  const [socialDeleteId, setSocialDeleteId] = useState<string | null>(null);
 
   const handleAddSubmit = () => {
     if (formData.url) {
@@ -90,7 +95,7 @@ export default function GallerySection() {
         newItems = items.map(item => item.id === currentItem.id ? { ...item, ...formData } : item);
       }
       updateGalleryItems(newItems);
-      
+
       setModalType(null);
       setFormData({ url: '', title: '', desc: '', link: '' });
       setCurrentItem(null);
@@ -101,10 +106,49 @@ export default function GallerySection() {
     if(deleteId) {
       const newItems = items.filter(item => item.id !== deleteId);
       updateGalleryItems(newItems);
-      
+
       setModalType(null);
       setDeleteId(null);
     }
+  };
+
+  const openAddSocial = () => {
+    setSocialFormData({ label: '', icon: '', url: '' });
+    setCurrentSocialLink(null);
+    setSocialModalType('add');
+  };
+
+  const openEditSocial = (link: HomeLink) => {
+    setSocialFormData({ label: link.label, icon: link.icon, url: link.url });
+    setCurrentSocialLink(link);
+    setSocialModalType('edit');
+  };
+
+  const openDeleteSocial = (link: HomeLink) => {
+    setCurrentSocialLink(link);
+    setSocialDeleteId(link.id);
+    setSocialModalType('delete');
+  };
+
+  const handleSocialSubmit = () => {
+    if (socialModalType === 'add') {
+      const newLink: HomeLink = { id: Date.now().toString(), label: socialFormData.label, icon: socialFormData.icon, url: socialFormData.url, isPrimary: false };
+      updateHomeLinks([...homeLinks, newLink]);
+    } else if (socialModalType === 'edit' && currentSocialLink) {
+      updateHomeLinks(homeLinks.map(l => l.id === currentSocialLink.id ? { ...l, label: socialFormData.label, icon: socialFormData.icon, url: socialFormData.url } : l));
+    }
+    setSocialModalType(null);
+    setCurrentSocialLink(null);
+    setSocialFormData({ label: '', icon: '', url: '' });
+  };
+
+  const handleSocialDeleteSubmit = () => {
+    if (socialDeleteId) {
+      updateHomeLinks(homeLinks.filter(l => l.id !== socialDeleteId));
+    }
+    setSocialModalType(null);
+    setSocialDeleteId(null);
+    setCurrentSocialLink(null);
   };
 
   const containerVariants = {
@@ -138,7 +182,7 @@ export default function GallerySection() {
   };
 
   return (
-    <motion.section 
+    <motion.section
       initial="hidden"
       whileInView="visible"
       viewport={{ once: false, amount: 0.15 }}
@@ -160,12 +204,12 @@ export default function GallerySection() {
           ))}
 
           {isOwner && (
-            <motion.div 
+            <motion.div
               variants={cardVariants}
-              whileHover={{ y: -5 }} 
+              whileHover={{ y: -5 }}
               className="relative h-full w-full sm:w-[calc(50%-1rem)] max-w-sm min-h-[350px]"
             >
-              <NeuContainer 
+              <NeuContainer
                 onClick={() => { setFormData({ url: '', title: '', desc: '', link: '' }); setModalType('add'); }}
                 className="flex flex-col items-center justify-center p-6 rounded-3xl h-full cursor-pointer opacity-60 hover:opacity-100 transition-all border-4 border-dashed border-[var(--text-color)] text-[var(--text-color)]"
                 style={{ background: 'transparent', boxShadow: 'none' }}
@@ -177,36 +221,49 @@ export default function GallerySection() {
           )}
         </div>
 
-        {socialLinks.length > 0 && (
-          <motion.div variants={cardVariants} className="flex flex-wrap justify-center gap-4 sm:gap-6 mt-4">
+        {(socialLinks.length > 0 || isOwner) && (
+          <motion.div variants={cardVariants} className="flex flex-wrap justify-center items-center gap-3 sm:gap-5 mt-4">
             {socialLinks.map((link) => {
               const platform = getPlatformInfo(link.url);
               return (
-                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer">
-                  <NeuContainer shape="flat" className="px-4 py-2.5 flex items-center gap-2.5 text-[var(--text-color)] font-semibold text-sm cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-full">
-                    {link.icon ? (
-                      <img src={platform.faviconUrl || link.icon} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
-                    ) : platform.faviconUrl ? (
-                      <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
-                    ) : (
-                      <ExternalLink size={18} />
-                    )}
-                    {platform.label}
-                  </NeuContainer>
-                </a>
+                <div key={link.id} className="relative group">
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <NeuContainer shape="flat" className="px-4 py-2.5 flex items-center gap-2.5 text-[var(--text-color)] font-semibold text-sm cursor-pointer hover:scale-105 active:scale-95 transition-transform rounded-full">
+                      {link.icon ? (
+                        <img src={platform.faviconUrl || link.icon} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                      ) : platform.faviconUrl ? (
+                        <img src={platform.faviconUrl} alt={platform.label} className="w-5 h-5 rounded-sm object-contain" />
+                      ) : (
+                        <ExternalLink size={18} />
+                      )}
+                      {platform.label}
+                    </NeuContainer>
+                  </a>
+                  {isOwner && (
+                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--bg-color)] rounded-lg p-1 shadow-lg z-20">
+                      <button onClick={(e) => { e.preventDefault(); openEditSocial(link); }} className="p-1 text-[var(--text-color)] hover:scale-110"><Edit2 size={14}/></button>
+                      <button onClick={(e) => { e.preventDefault(); openDeleteSocial(link); }} className="p-1 text-red-500 hover:scale-110"><Trash2 size={14}/></button>
+                    </div>
+                  )}
+                </div>
               );
             })}
+            {isOwner && (
+              <button onClick={openAddSocial} className="flex items-center gap-1.5 text-[var(--text-color)] opacity-50 hover:opacity-100 text-sm">
+                <Plus size={14}/> Add Link
+              </button>
+            )}
           </motion.div>
         )}
       </div>
 
       <Modal isOpen={modalType === 'add' || modalType === 'edit'} onClose={() => setModalType(null)} title={modalType === 'add' ? t('uploadNewImage') : t('edit')}>
         <div className="flex flex-col gap-4">
-          <NeuFileInput 
-            label="Upload Image (16:9)" 
-            value={formData.url} 
+          <NeuFileInput
+            label="Upload Image (16:9)"
+            value={formData.url}
             aspectRatio={16/9}
-            onFileSelect={(base64) => setFormData({...formData, url: base64})} 
+            onFileSelect={(base64) => setFormData({...formData, url: base64})}
           />
           <NeuInput placeholder="Title (Optional)" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
           <NeuInput placeholder="Description (Optional)" value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} />
@@ -223,6 +280,26 @@ export default function GallerySection() {
         <div className="flex gap-4">
           <NeuButton className="flex-1" onClick={() => setModalType(null)}>Cancel</NeuButton>
           <NeuButton variant="danger" className="flex-1" onClick={handleDeleteSubmit}>Delete</NeuButton>
+        </div>
+      </Modal>
+
+      <Modal isOpen={socialModalType === 'add' || socialModalType === 'edit'} onClose={() => setSocialModalType(null)} title={socialModalType === 'add' ? 'Add Link' : 'Edit Link'}>
+        <div className="flex flex-col gap-4">
+          <NeuInput placeholder="Label (e.g. Download, Discord)" value={socialFormData.label} onChange={e => setSocialFormData({...socialFormData, label: e.target.value})} />
+          <NeuInput placeholder="Icon Name or Image URL (Optional)" value={socialFormData.icon} onChange={e => setSocialFormData({...socialFormData, icon: e.target.value})} />
+          <NeuInput placeholder="URL (e.g. https://mediafire.com/...)" value={socialFormData.url} onChange={e => setSocialFormData({...socialFormData, url: e.target.value})} />
+          <div className="flex gap-4 mt-2">
+            <NeuButton className="flex-1" onClick={() => setSocialModalType(null)}>Cancel</NeuButton>
+            <NeuButton className="flex-1" onClick={handleSocialSubmit}>Save</NeuButton>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={socialModalType === 'delete'} onClose={() => setSocialModalType(null)} title="Delete Link?">
+        <p className="text-center text-[var(--text-color)] mb-4">Are you sure you want to delete this link?</p>
+        <div className="flex gap-4">
+          <NeuButton className="flex-1" onClick={() => setSocialModalType(null)}>Cancel</NeuButton>
+          <NeuButton variant="danger" className="flex-1" onClick={handleSocialDeleteSubmit}>Delete</NeuButton>
         </div>
       </Modal>
 
